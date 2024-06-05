@@ -1,6 +1,6 @@
 import Foundation
 
-public struct EmailAddress: Codable {
+public struct EmailAddress: Decodable {
     /// format: email
     public var email: String
     
@@ -14,10 +14,24 @@ public struct EmailAddress: Codable {
         self.email = email
         self.name = name
     }
+    
+    var string: String {
+        guard let name = self.name else {
+            return self.email
+        }
+        return "\(name) <\(self.email)>"
+    }
+    
 }
 
 extension EmailAddress: ExpressibleByStringLiteral {
     public init(stringLiteral email: StringLiteralType) {
         self.init(email: email)
+    }
+}
+
+extension Array where Element == EmailAddress {
+    var stringArray: [String] {
+        map { $0.string }
     }
 }

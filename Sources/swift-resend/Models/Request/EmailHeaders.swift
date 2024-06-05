@@ -12,4 +12,15 @@ public struct EmailHeaders: Codable {
         self.name = name
         self.value = value
     }
+       
+}
+
+extension Array where Element == EmailHeaders {
+    var objectArray: [String: String?] {
+        var headersObject = [String: String?]()
+        self.forEach { header in
+            headersObject[header.name] = header.value
+        }
+        return headersObject
+    }
 }

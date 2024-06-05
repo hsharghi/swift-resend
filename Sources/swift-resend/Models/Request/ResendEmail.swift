@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ResendEmail: Codable {
+public struct ResendEmail {
     
     public var from: EmailAddress
 
@@ -49,6 +49,7 @@ public struct ResendEmail: Codable {
          replyTo: [EmailAddress]? = nil,
          text: String? = nil,
          html: String? = nil,
+         headers: [EmailHeaders]? = nil,
          attachments: [EmailAttachment]? = nil,
          tags: [EmailTags]? = nil) {
         self.from = from
@@ -59,6 +60,7 @@ public struct ResendEmail: Codable {
         self.replyTo = replyTo
         self.text = text
         self.html = html
+        self.headers = headers
         self.attachments = attachments
         self.tags = tags
     }
@@ -73,8 +75,31 @@ public struct ResendEmail: Codable {
         case replyTo = "reply_to"
         case text
         case html
+        case headers
         case attachments
         case tags
     }
 
+}
+
+
+extension ResendEmail: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(from.string, forKey: .from)
+        try container.encodeIfPresent(to?.stringArray, forKey: .to)
+        try container.encodeIfPresent(subject, forKey: .subject)
+        try container.encodeIfPresent(cc?.stringArray, forKey: .cc)
+        try container.encodeIfPresent(bcc?.stringArray, forKey: .bcc)
+        try container.encodeIfPresent(replyTo?.stringArray, forKey: .replyTo)
+        try container.encodeIfPresent(text, forKey: .text)
+        try container.encodeIfPresent(html, forKey: .html)
+        try container.encodeIfPresent(headers?.objectArray, forKey: .headers)
+        try container.encodeIfPresent(attachments, forKey: .attachments)
+        try container.encodeIfPresent(tags, forKey: .tags)
+        
+//        var attachments = container.nestedContainer(keyedBy: [EmailAttachment].self, forKey: .attachments)
+//        try attachments.encode(, forKey: .content)
+
+    }
 }
