@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Hadi Sharghi on 6/2/24.
 //
@@ -11,31 +11,11 @@ import AsyncHTTPClient
 import NIOHTTP1
 import NIOFoundationCompat
 
-public struct ResendClient {
-    
-    let apiURL = "https://api.resend.com"
-    let httpClient: HTTPClient
-    let apiKey: String
-    
-    private let encoder: JSONEncoder = {
-        let encoder = JSONEncoder()
-         encoder.dateEncodingStrategy = .secondsSince1970
-         return encoder
-    }()
-    
-    private let decoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
-        return decoder
-    }()
-
-    public init(httpClient: HTTPClient, apiKey: String) {
-        self.httpClient = httpClient
-        self.apiKey = apiKey
-    }
+public class EmailClient: ResendClient {
     
     public func send(email: ResendEmail) async throws -> EmailSentResponse {
-                
+        
+        
         var headers = HTTPHeaders()
         headers.add(name: "Authorization", value: "Bearer \(apiKey)")
         headers.add(name: "Content-Type", value: "application/json")
@@ -44,6 +24,8 @@ public struct ResendClient {
             headers.add(name: emailHeader.name, value: emailHeader.value ?? "")
         })
         
+        let enc = try encoder.encode(email)
+        print(String(data: enc, encoding: .utf8))
         let response = try await httpClient.execute(
             request: .init(
                 url: apiURL + "/email",
