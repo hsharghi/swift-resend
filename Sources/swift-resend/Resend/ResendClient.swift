@@ -24,14 +24,23 @@ public class ResendClient {
     }()
     
     let decoder: JSONDecoder = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
         return decoder
     }()
 
     public init(httpClient: HTTPClient, apiKey: String) {
         self.httpClient = httpClient
         self.apiKey = apiKey
+    }
+    
+    public func getAuthHeader() -> HTTPHeaders {
+        var headers = HTTPHeaders()
+        headers.add(name: "Authorization", value: "Bearer \(apiKey)")
+        headers.add(name: "Content-Type", value: "application/json")
+        return headers
     }
     
     public var emails: EmailClient {

@@ -1,13 +1,13 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Hadi Sharghi on 6/2/24.
 //
 
 import Foundation
 
-public struct ResendEmail {
+public struct ResendBatchEmail {
     
     public var from: EmailAddress
 
@@ -35,13 +35,7 @@ public struct ResendEmail {
     /// Custom headers to add to the email.
     public var headers: [EmailHeaders]?
 
-    /// An array of objects in which you can specify any attachments you want to include.
-    public var attachments: [EmailAttachment]?
-    
-    /// An array of objects in which you can specify any attachments you want to include.
-    public var tags: [EmailTags]?
-    
-    init(from: EmailAddress, 
+    init(from: EmailAddress,
          to: [EmailAddress]? = nil,
          subject: String? = nil,
          cc: [EmailAddress]? = nil,
@@ -49,9 +43,7 @@ public struct ResendEmail {
          replyTo: [EmailAddress]? = nil,
          text: String? = nil,
          html: String? = nil,
-         headers: [EmailHeaders]? = nil,
-         attachments: [EmailAttachment]? = nil,
-         tags: [EmailTags]? = nil) {
+         headers: [EmailHeaders]? = nil) {
         self.from = from
         self.to = to
         self.subject = subject
@@ -61,8 +53,6 @@ public struct ResendEmail {
         self.text = text
         self.html = html
         self.headers = headers
-        self.attachments = attachments
-        self.tags = tags
     }
     
     
@@ -83,7 +73,7 @@ public struct ResendEmail {
 }
 
 
-extension ResendEmail: Encodable {
+extension ResendBatchEmail: Encodable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(from.string, forKey: .from)
@@ -95,7 +85,5 @@ extension ResendEmail: Encodable {
         try container.encodeIfPresent(text, forKey: .text)
         try container.encodeIfPresent(html, forKey: .html)
         try container.encodeIfPresent(headers?.objectArray, forKey: .headers)
-        try container.encodeIfPresent(attachments, forKey: .attachments)
-        try container.encodeIfPresent(tags, forKey: .tags)
     }
 }
