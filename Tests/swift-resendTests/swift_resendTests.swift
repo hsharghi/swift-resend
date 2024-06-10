@@ -4,9 +4,20 @@ import AsyncHTTPClient
 
 final class swift_resendTests: XCTestCase {
     
-    private var resend: ResendClient = .init(httpClient: HTTPClient.shared,
-                                             apiKey: "RESEND_API_KEY")
+    private var httpClient: HTTPClient!
+    private var resend: ResendClient!
+    
+    
+    override func setUp() {
+        httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
         
+        // TODO: Replace with your API key to test!
+        resend = ResendClient(httpClient: httpClient, apiKey: "YOUR-API-KEY")
+    }
+    
+    override func tearDown() async throws {
+        try await httpClient.shutdown()
+    }
 
     func testSend() async throws {
         let response = try await resend.emails.send(email: .init(
