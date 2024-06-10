@@ -8,6 +8,8 @@
 import Foundation
 
 struct AudienceCreate: Encodable {
+    
+    /// The name of the audience you want to create.
     var name: String
     
     init(name: String) {

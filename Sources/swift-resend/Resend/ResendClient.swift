@@ -47,10 +47,18 @@ public class ResendClient {
         EmailClient(httpClient: httpClient, apiKey: apiKey)
     }    
     
+    public var audiences: AudienceClient {
+        AudienceClient(httpClient: httpClient, apiKey: apiKey)
+    }
+    
+    public var contacts: ContactClient {
+        ContactClient(httpClient: httpClient, apiKey: apiKey)
+    }    
+    
     internal func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         
-        if response.status == .ok {
+        if response.status == .ok || response.status == .created {
             return try decodeResponse(T.self, from: byteBuffer)
         } else {
             let errorResponse = try decodeResponse(ErrorResponse.self, from: byteBuffer)
@@ -62,7 +70,9 @@ public class ResendClient {
     
     internal func parseErrorResponse(_ errorResponse: ErrorResponse) throws -> Never {
         switch errorResponse.name {
-        case "missing_required_field", "missing_api_key":
+        case "missing_required_field":
+            throw ResendError.missingRequiredField(errorResponse.message)
+        case "missing_api_key":
             throw ResendError.missingApiKey(errorResponse.message)
         case "invalid_attachment":
             throw ResendError.invalidAttachment(errorResponse.message)
@@ -84,6 +94,8 @@ public class ResendClient {
             throw ResendError.dailyQuotaExceeded(errorResponse.message)
         case "internal_server_error":
             throw ResendError.internalServerError(errorResponse.message)
+        case "validation_error":
+            throw ResendError.validationError(errorResponse.message)
         case "restricted_api_key":
             throw ResendError.restrictedApiKey(errorResponse.message)
         default:
@@ -92,7 +104,11 @@ public class ResendClient {
     }
     
     internal func decodeResponse<T: Decodable>(_ type: T.Type, from byteBuffer: ByteBuffer) throws -> T {
-        return try decoder.decode(T.self, from: byteBuffer)
+        do {
+            return try decoder.decode(T.self, from: byteBuffer)
+        } catch {
+            throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: T.Type.self))")
+        }
     }
     
 }

@@ -8,12 +8,10 @@
 import Foundation
 
 public struct ContactDeleteResponse: Decodable {
-    public var object: String
     public var contact: String
     public var deleted: Bool
     
-    init(object: String = "contact", contact: String, deleted: Bool) {
-        self.object = object
+    init(contact: String, deleted: Bool) {
         self.contact = contact
         self.deleted = deleted
     }

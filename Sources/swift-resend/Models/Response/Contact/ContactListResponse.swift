@@ -6,3 +6,12 @@
 //
 
 import Foundation
+
+public struct ContactListResponse: Decodable {
+    public var data: [ResendContact]
+    
+    init(data: [ResendContact]) {
+        self.data = data
+    }
+}
+

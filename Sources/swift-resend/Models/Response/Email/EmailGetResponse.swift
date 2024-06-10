@@ -10,7 +10,6 @@ import Foundation
 public struct EmailGetResponse {
     
     public var id: String
-    public var object: String
     public var to: [EmailAddress]
     public var from: EmailAddress
     public var createdAt: Date
@@ -24,7 +23,6 @@ public struct EmailGetResponse {
 
     enum CodingKeys: String, CodingKey {
         case id
-        case object
         case to
         case from
         case createdAt = "created_at"
@@ -38,7 +36,6 @@ public struct EmailGetResponse {
     }
     
     init(id: String, 
-         object: String,
          to: [EmailAddress],
          from: EmailAddress,
          createdAt: Date,
@@ -50,7 +47,6 @@ public struct EmailGetResponse {
          replyTo: [EmailAddress]? = nil,
          lastEvent: String) {
         self.id = id
-        self.object = object
         self.to = to
         self.from = from
         self.createdAt = createdAt
@@ -71,7 +67,6 @@ extension EmailGetResponse: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         id = try container.decode(String.self, forKey: .id)
-        object = try container.decode(String.self, forKey: .object)
         
         let toStrings = try container.decode([String].self, forKey: .to)
         let toAddresses = toStrings.map { EmailAddress(from: $0)}
@@ -107,8 +102,4 @@ extension EmailGetResponse: Decodable {
 
         
     }
-
-//        var attachments = container.nestedContainer(keyedBy: [EmailAttachment].self, forKey: .attachments)
-//        try attachments.encode(, forKey: .content)
-
 }

@@ -24,7 +24,7 @@ public class EmailClient: ResendClient {
             )
         ).get()
         
-        return try parseSentResponse(response)
+        return try parseResponse(response, to: EmailSentResponse.self)
         
     }
 
@@ -58,7 +58,7 @@ public class EmailClient: ResendClient {
                 headers: getAuthHeader()
             )
         ).get()
-        return try parseGetResponse(response)
+        return try parseResponse(response, to: EmailGetResponse.self)
         
     }
 }

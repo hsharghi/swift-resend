@@ -47,6 +47,7 @@ public enum ResendError: Error {
     case dailyQuotaExceeded(String)
     case validationError(String)
     case internalServerError(String)
+    case decodingError(String)
     case unknownError
     
     
@@ -81,6 +82,8 @@ public enum ResendError: Error {
             return "validation_error"
         case .internalServerError:
             return "internal_server_error"
+        case .decodingError:
+            return "decoding_error"
         case .unknownError:
             return "unknown_error"
         }
@@ -102,6 +105,7 @@ public enum ResendError: Error {
                 .rateLimitExceeded(let message),
                 .dailyQuotaExceeded(let message),
                 .validationError(let message),
+                .decodingError(let message),
                 .internalServerError(let message):
             return message
         case .unknownError:
@@ -140,6 +144,8 @@ public enum ResendError: Error {
             return ""
         case .internalServerError:
             return "Try the request again later. If the error does not resolve, check our status page for service updates."
+        case .decodingError:
+            return ""
         case .unknownError:
             return ""
         }
