@@ -46,4 +46,53 @@ public class ResendClient {
     public var emails: EmailClient {
         EmailClient(httpClient: httpClient, apiKey: apiKey)
     }    
+    
+    internal func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
+        let byteBuffer: ByteBuffer = response.body ?? .init()
+        
+        if response.status == .ok {
+            return try decodeResponse(T.self, from: byteBuffer)
+        } else {
+            let errorResponse = try decodeResponse(ErrorResponse.self, from: byteBuffer)
+            try parseErrorResponse(errorResponse)
+        }
+    }
+    
+
+    
+    internal func parseErrorResponse(_ errorResponse: ErrorResponse) throws -> Never {
+        switch errorResponse.name {
+        case "missing_required_field", "missing_api_key":
+            throw ResendError.missingApiKey(errorResponse.message)
+        case "invalid_attachment":
+            throw ResendError.invalidAttachment(errorResponse.message)
+        case "invalid_api_key":
+            throw ResendError.invalidApiKey(errorResponse.message)
+        case "invalid_from_address":
+            throw ResendError.invalidFromAddress(errorResponse.message)
+        case "invalid_to_address":
+            throw ResendError.invalidToAddress(errorResponse.message)
+        case "not_found":
+            throw ResendError.notFound(errorResponse.message)
+        case "method_not_allowed":
+            throw ResendError.methodNotAllowed(errorResponse.message)
+        case "invalid_scope":
+            throw ResendError.invalidScope(errorResponse.message)
+        case "rate_limit_exceeded":
+            throw ResendError.rateLimitExceeded(errorResponse.message)
+        case "daily_quota_exceeded":
+            throw ResendError.dailyQuotaExceeded(errorResponse.message)
+        case "internal_server_error":
+            throw ResendError.internalServerError(errorResponse.message)
+        case "restricted_api_key":
+            throw ResendError.restrictedApiKey(errorResponse.message)
+        default:
+            throw ResendError.unknownError
+        }
+    }
+    
+    internal func decodeResponse<T: Decodable>(_ type: T.Type, from byteBuffer: ByteBuffer) throws -> T {
+        return try decoder.decode(T.self, from: byteBuffer)
+    }
+    
 }
