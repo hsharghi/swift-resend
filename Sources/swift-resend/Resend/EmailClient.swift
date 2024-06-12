@@ -11,7 +11,7 @@ import NIOHTTP1
 public class EmailClient: ResendClient {
         
     /// Send email
-    public func send(email: ResendEmail) async throws -> EmailSentResponse {
+    public func send(email: ResendEmail) async throws -> String {
         
         let response = try await httpClient.execute(
             request: .init(
@@ -22,14 +22,15 @@ public class EmailClient: ResendClient {
             )
         ).get()
         
-        return try parseResponse(response, to: EmailSentResponse.self)
+        let sentEmail = try parseResponse(response, to: EmailSentResponse.self)
+        return sentEmail.id
         
     }
 
     /// Send batch emails
     /// Attachments and Tags are not supported in batch sending emails
     /// Id of successfully sent emails will be returned
-    public func sendBatch(emails: [ResendBatchEmail]) async throws -> [EmailSentResponse] {
+    public func sendBatch(emails: [ResendBatchEmail]) async throws -> [String] {
                 
         let response = try await httpClient.execute(
             request: .init(
