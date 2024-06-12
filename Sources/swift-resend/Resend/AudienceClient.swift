@@ -71,7 +71,7 @@ public class AudienceClient: ResendClient {
             )
         ).get()
         
-        return try parseContactListResponse(response)
+        return try parseAudienceListResponse(response)
 
     }
 }
