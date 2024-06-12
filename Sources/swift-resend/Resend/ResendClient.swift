@@ -16,6 +16,11 @@ public class ResendClient {
     let httpClient: HTTPClient
     let apiKey: String
     
+    public init(httpClient: HTTPClient, apiKey: String) {
+        self.httpClient = httpClient
+        self.apiKey = apiKey
+    }
+    
     let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
          encoder.dateEncodingStrategy = .secondsSince1970
@@ -30,12 +35,7 @@ public class ResendClient {
         return decoder
     }()
 
-    public init(httpClient: HTTPClient, apiKey: String) {
-        self.httpClient = httpClient
-        self.apiKey = apiKey
-    }
-    
-    public func getAuthHeader() -> HTTPHeaders {
+    func getAuthHeader() -> HTTPHeaders {
         var headers = HTTPHeaders()
         headers.add(name: "Authorization", value: "Bearer \(apiKey)")
         headers.add(name: "Content-Type", value: "application/json")
@@ -65,7 +65,14 @@ public class ResendClient {
         }
     }
     
-
+    
+    func decodeResponse<T: Decodable>(_ type: T.Type, from byteBuffer: ByteBuffer) throws -> T {
+        do {
+            return try decoder.decode(T.self, from: byteBuffer)
+        } catch {
+            throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: T.Type.self))")
+        }
+    }
     
     func parseErrorResponse(_ errorResponse: ErrorResponse) throws -> Never {
         switch errorResponse.name {
@@ -102,12 +109,5 @@ public class ResendClient {
         }
     }
     
-    func decodeResponse<T: Decodable>(_ type: T.Type, from byteBuffer: ByteBuffer) throws -> T {
-        do {
-            return try decoder.decode(T.self, from: byteBuffer)
-        } catch {
-            throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: T.Type.self))")
-        }
-    }
     
 }
