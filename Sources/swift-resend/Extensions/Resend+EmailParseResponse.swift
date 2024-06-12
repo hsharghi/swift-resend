@@ -11,13 +11,13 @@ import NIOFoundationCompat
 
 extension EmailClient {
     
-    func parseBatchSentResponse(_ response: HTTPClient.Response) throws -> [EmailSentResponse] {
+    func parseBatchSentResponse(_ response: HTTPClient.Response) throws -> [String] {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         
         if response.status == .ok {
             do {
                 let res = try decodeResponse(EmailSentBatchResponse.self, from: byteBuffer)
-                return res.data
+                return res.data.map { $0.id }
             } catch {
                 throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: AudienceListResponse.self))")
             }
