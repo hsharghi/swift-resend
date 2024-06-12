@@ -35,29 +35,6 @@ public struct EmailGetResponse {
         case lastEvent = "last_event"
     }
     
-    init(id: String, 
-         to: [EmailAddress],
-         from: EmailAddress,
-         createdAt: Date,
-         subject: String,
-         html: String? = nil,
-         text: String? = nil,
-         bcc: [EmailAddress]? = nil,
-         cc: [EmailAddress]? = nil,
-         replyTo: [EmailAddress]? = nil,
-         lastEvent: String) {
-        self.id = id
-        self.to = to
-        self.from = from
-        self.createdAt = createdAt
-        self.subject = subject
-        self.html = html
-        self.text = text
-        self.bcc = bcc
-        self.cc = cc
-        self.replyTo = replyTo
-        self.lastEvent = lastEvent
-    }
 }
 
 
