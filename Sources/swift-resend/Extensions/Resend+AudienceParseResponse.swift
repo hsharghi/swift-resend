@@ -22,7 +22,7 @@ extension AudienceClient {
         }
     }
     
-    func parseContactListResponse(_ response: HTTPClient.Response) throws -> [Audience] {
+    func parseAudienceListResponse(_ response: HTTPClient.Response) throws -> [Audience] {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         
         if response.status == .ok {
