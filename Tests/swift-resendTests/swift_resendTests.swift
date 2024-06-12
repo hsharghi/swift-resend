@@ -20,7 +20,7 @@ final class swift_resendTests: XCTestCase {
     }
 
     func testSend() async throws {
-        let response = try await resend.emails.send(email: .init(
+        let id = try await resend.emails.send(email: .init(
             from: .init(email: "hadi@example.com", name: "Hadi"),
             to: ["hadi@domain.com"],
             subject: "running xctest",
@@ -41,7 +41,7 @@ final class swift_resendTests: XCTestCase {
                 .init(name: "department", value: "sales")
             ]
         ))
-        XCTAssertNotNil(response.id)
+        XCTAssertNotNil(id)
     }
     
     func testSendBatch() async throws {
@@ -64,7 +64,7 @@ final class swift_resendTests: XCTestCase {
     
     func testGetEmail() async throws {
         let from = EmailAddress(email: "hadi@example.com", name: "Hadi")
-        let sentResponse = try await resend.emails.send(email: .init(
+        let id = try await resend.emails.send(email: .init(
             from: from,
             to: ["hadi@domain.com"],
             subject: "running xctest",
@@ -79,8 +79,6 @@ final class swift_resendTests: XCTestCase {
             ]
         ))
         
-        let id = sentResponse.id
-
         let response = try await resend.emails.get(emailId: id)
         
         XCTAssertEqual(response.id, id)
@@ -139,4 +137,124 @@ final class swift_resendTests: XCTestCase {
         XCTAssertEqual(ids.count, 2)
     }
     
+    func testCreateContact() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        let contactId = try await resend.contacts.create(audienceId: audience.id,
+                                                         email: "hadi@example.com",
+                                                         firstName: "Hadi",
+                                                         subscriptionStatus: true)
+
+        XCTAssertNotNil(contactId)
+    }
+    
+    func testGetContact() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        let contactId = try await resend.contacts.create(audienceId: audience.id,
+                                                         email: "hadi@example.com",
+                                                         firstName: "Hadi",
+                                                         subscriptionStatus: true)
+       
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        let contact = try await resend.contacts.get(audienceId: audience.id,
+                                                    contactId: contactId)
+        XCTAssertEqual(contact.id, contactId)
+        XCTAssertEqual(contact.firstName, "Hadi")
+        XCTAssertTrue(contact.subscriptionStatus)
+    }
+    
+    func testUpdateContact() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        let contactId = try await resend.contacts.create(audienceId: audience.id,
+                                                         email: "hadi@example.com",
+                                                         firstName: "Hadi",
+                                                         subscriptionStatus: false)
+       
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        _ = try await resend.contacts.update(audienceId: audience.id,
+                                             contactId: contactId,
+                                             firstName: "John",
+                                             subscriptionStatus: true)
+        
+        let updatedContact = try await resend.contacts.get(audienceId: audience.id, contactId: contactId)
+        XCTAssertEqual(updatedContact.id, contactId)
+        XCTAssertEqual(updatedContact.firstName, "John")
+        XCTAssertTrue(updatedContact.subscriptionStatus)
+
+    }
+    
+    func testDeleteContactWithId() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        let contactId = try await resend.contacts.create(audienceId: audience.id,
+                                                         email: "hadi@example.com",
+                                                         firstName: "Hadi")
+
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        let response = try await resend.contacts.delete(audienceId: audience.id, contactId: contactId)
+        XCTAssertEqual(response.contact, contactId)
+        XCTAssertTrue(response.deleted)
+    }
+    
+    func testDeleteContactWithEmail() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        _ = try await resend.contacts.create(audienceId: audience.id, 
+                                             email: "hadi@example.com",
+                                             firstName: "Hadi")
+
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        let response = try await resend.contacts.delete(audienceId: audience.id, email: "hadi@example.com")
+        XCTAssertEqual(response.contact, "hadi@example.com")
+        XCTAssertTrue(response.deleted)
+    }
+    
+    func testGetContactList() async throws {
+        let audience = try await resend.audiences.create(name: "test-audience")
+        
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        _ = try await resend.contacts.create(audienceId: audience.id,
+                                                          email: "hadi@example.com",
+                                                          firstName: "Hadi",
+                                                          subscriptionStatus: true)
+        _ = try await resend.contacts.create(audienceId: audience.id,
+                                                          email: "john@example.com",
+                                                          firstName: "John",
+                                                          lastName: "Appleseed",
+                                                          subscriptionStatus: false)
+        
+        // prevent API rate limit error
+        try await Task.sleep(for: .seconds(1))
+
+        let list = try await resend.contacts.list(audienceId: audience.id)
+        XCTAssertEqual(list.count, 2)
+        XCTAssertNotNil(list.filter { $0.firstName == "Hadi" })
+        XCTAssertNotNil(list.filter { $0.firstName == "John" })
+        
+
+    }
+
+    
+    // MARK: Helper
+    /// Delete all audiences created via tests
+    func testDeleteAllAudience() async throws {
+        let list = try await resend.audiences.list()
+
+        await list.asyncForEach { audience in
+            do {
+                _ = try await resend.audiences.delete(audienceId: audience.id)
+                try await Task.sleep(for: .milliseconds(600))
+            } catch {
+                
+            }
+        }
+    }
+
 }
