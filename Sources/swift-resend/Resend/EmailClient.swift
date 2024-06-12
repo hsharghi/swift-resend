@@ -17,7 +17,7 @@ public class EmailClient: ResendClient {
         
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)",
+                url: APIPath.getPath(for: .emailSend),
                 method: .POST,
                 headers: getAuthHeader(),
                 body: .data(encoder.encode(email))
@@ -35,7 +35,7 @@ public class EmailClient: ResendClient {
                 
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)/batch",
+                url: APIPath.getPath(for: .emailBatchSend),
                 method: .POST,
                 headers: getAuthHeader(),
                 body: .data(encoder.encode(emails))
@@ -53,7 +53,7 @@ public class EmailClient: ResendClient {
         
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)/\(emailId)",
+                url: APIPath.getPath(for: .emailGet(emailId: emailId)),
                 method: .GET,
                 headers: getAuthHeader()
             )

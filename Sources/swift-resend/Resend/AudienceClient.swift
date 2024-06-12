@@ -10,15 +10,13 @@ import NIOHTTP1
 
 public class AudienceClient: ResendClient {
     
-    let path = "audiences"
-    
     /// Create a list of contacts (Audience).
     public func create(name: String) async throws -> AudienceCreateResponse {
         
         let body = AudienceCreate(name: name)
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)",
+                url: APIPath.getPath(for: .audienceCreate),
                 method: .POST,
                 headers: getAuthHeader(),
                 body: .data(encoder.encode(body))
@@ -35,7 +33,7 @@ public class AudienceClient: ResendClient {
         
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)/\(audienceId)",
+                url: APIPath.getPath(for: .audienceGet(audienceId: audienceId)),
                 method: .GET,
                 headers: getAuthHeader()
             )
@@ -51,7 +49,7 @@ public class AudienceClient: ResendClient {
         
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)/\(audienceId)",
+                url: APIPath.getPath(for: .audienceDelete(audienceId: audienceId)),
                 method: .DELETE,
                 headers: getAuthHeader()
             )
@@ -67,7 +65,7 @@ public class AudienceClient: ResendClient {
         
         let response = try await httpClient.execute(
             request: .init(
-                url: apiURL + "/\(path)",
+                url: APIPath.getPath(for: .audienceList),
                 method: .GET,
                 headers: getAuthHeader()
             )
