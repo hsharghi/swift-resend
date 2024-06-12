@@ -9,9 +9,7 @@ import AsyncHTTPClient
 import NIOHTTP1
 
 public class EmailClient: ResendClient {
-    
-    let path = "emails"
-    
+        
     /// Send email
     public func send(email: ResendEmail) async throws -> EmailSentResponse {
         

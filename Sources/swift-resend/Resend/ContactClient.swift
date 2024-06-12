@@ -10,7 +10,6 @@ import NIOHTTP1
 
 public class ContactClient: ResendClient {
     
-    let path = "audience"
 //    
 //    /// Send email
 //    public func send(email: ResendEmail) async throws -> EmailSentResponse {
