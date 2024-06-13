@@ -2,7 +2,7 @@ import XCTest
 import AsyncHTTPClient
 @testable import swift_resend
 
-final class swift_resendTests: XCTestCase {
+final class SwiftResendTests: XCTestCase {
     
     private var httpClient: HTTPClient!
     private var resend: ResendClient!

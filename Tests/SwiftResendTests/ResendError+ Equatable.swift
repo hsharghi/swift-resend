@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@testable import swift_resend
+@testable import Resend
 
 extension ResendError: Equatable {
     public static func == (lhs: ResendError, rhs: ResendError) -> Bool {
