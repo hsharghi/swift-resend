@@ -9,7 +9,7 @@
     </a>
 </p>
 
-SwiftResend is a Swift package used to communicate with the Resend email sending platform API for Server Side Swift Apps.
+SwiftResend is a Swift package used to communicate with the [Resend](https://resend.com) email sending platform API for Server Side Swift Apps.
 
 ## Setup
 Add the dependency to Package.swift:
