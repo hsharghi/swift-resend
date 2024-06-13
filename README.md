@@ -117,3 +117,14 @@ catch let error as ResendError {
     print(error.suggestion)
 }
 ~~~~
+
+---
+
+### APIs supported by the current SDK
+
+- [x] Emails
+- [x] Audiences
+- [x] Contacts
+- [ ] Domains
+- [ ] API Keys
+
