@@ -1,6 +1,6 @@
 import XCTest
 import AsyncHTTPClient
-@testable import swift_resend
+@testable import Resend
 
 final class SwiftResendTests: XCTestCase {
     
