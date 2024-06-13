@@ -2,7 +2,9 @@
 .idea
 /.build
 .swiftpm
+/*.xcodeproj
 /Packages
+Package.resolved
 xcuserdata/
 DerivedData/
 .netrc
