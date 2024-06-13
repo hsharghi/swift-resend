@@ -12,10 +12,10 @@ public struct ResendEmail {
     public var from: EmailAddress
 
     /// An array of recipients. Each object within this array may contain the name, but must always contain the email, of a recipient.
-    public var to: [EmailAddress]?
+    public var to: [EmailAddress]
 
     /// The global, or “message level”, subject of your email. This may be overridden by personalizations[x].subject.
-    public var subject: String?
+    public var subject: String
     
     /// An array of recipients who will receive a copy of your email. Each object within this array may contain the name, but must always contain the email, of a recipient.
     public var cc: [EmailAddress]?
@@ -42,8 +42,8 @@ public struct ResendEmail {
     public var tags: [EmailTags]?
     
     public init(from: EmailAddress, 
-         to: [EmailAddress]? = nil,
-         subject: String? = nil,
+         to: [EmailAddress],
+         subject: String,
          cc: [EmailAddress]? = nil,
          bcc: [EmailAddress]? = nil,
          replyTo: [EmailAddress]? = nil,
@@ -87,7 +87,7 @@ extension ResendEmail: Encodable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(from.string, forKey: .from)
-        try container.encodeIfPresent(to?.stringArray, forKey: .to)
+        try container.encodeIfPresent(to.stringArray, forKey: .to)
         try container.encodeIfPresent(subject, forKey: .subject)
         try container.encodeIfPresent(cc?.stringArray, forKey: .cc)
         try container.encodeIfPresent(bcc?.stringArray, forKey: .bcc)
