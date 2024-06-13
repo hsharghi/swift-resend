@@ -9,7 +9,11 @@ import AsyncHTTPClient
 import NIOHTTP1
 
 public class ContactClient: ResendClient {
-        
+      
+    internal override init(httpClient: HTTPClient, apiKey: String) {
+        super.init(httpClient: httpClient, apiKey: apiKey)
+    }
+    
     /// Create a contact inside an audience.
     public func create(audienceId: String, 
                        email: String,

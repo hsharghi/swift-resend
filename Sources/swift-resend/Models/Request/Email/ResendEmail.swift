@@ -41,7 +41,7 @@ public struct ResendEmail {
     /// An array of objects in which you can specify any attachments you want to include.
     public var tags: [EmailTags]?
     
-    init(from: EmailAddress, 
+    public init(from: EmailAddress, 
          to: [EmailAddress]? = nil,
          subject: String? = nil,
          cc: [EmailAddress]? = nil,

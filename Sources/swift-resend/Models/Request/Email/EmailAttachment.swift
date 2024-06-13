@@ -13,7 +13,7 @@ public struct EmailAttachment {
     /// Path where the attachment file is hosted
     public var path: String?
 
-    init(content: ByteBuffer,
+    public init(content: ByteBuffer,
          filename: String,
          path: String? = nil) {
         self.content = content
@@ -21,7 +21,7 @@ public struct EmailAttachment {
         self.path = path
     }
 
-    enum CodingKeys: CodingKey {
+    private enum CodingKeys: CodingKey {
         case content
         case filename
         case path

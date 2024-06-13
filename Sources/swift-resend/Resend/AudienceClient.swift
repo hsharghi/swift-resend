@@ -10,6 +10,10 @@ import NIOHTTP1
 
 public class AudienceClient: ResendClient {
     
+    internal override init(httpClient: HTTPClient, apiKey: String) {
+        super.init(httpClient: httpClient, apiKey: apiKey)
+    }
+    
     /// Create a list of contacts (Audience).
     public func create(name: String) async throws -> AudienceCreateResponse {
         

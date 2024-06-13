@@ -12,7 +12,7 @@ public struct EmailAddress: Decodable {
         self.name = name
     }
     
-    var string: String {
+    public var string: String {
         guard let name = self.name else {
             return self.email
         }

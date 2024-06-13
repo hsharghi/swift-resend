@@ -10,6 +10,10 @@ import NIOHTTP1
 
 public class EmailClient: ResendClient {
         
+    internal override init(httpClient: HTTPClient, apiKey: String) {
+        super.init(httpClient: httpClient, apiKey: apiKey)
+    }
+    
     /// Send email
     public func send(email: ResendEmail) async throws -> String {
         
