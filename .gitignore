@@ -1,9 +1,9 @@
 .DS_Store
+.idea
 /.build
+.swiftpm
 /Packages
 xcuserdata/
 DerivedData/
-.swiftpm/configuration/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
-/Tests/swift-resendTests/swift_resendTestsPrivate.swift
+/Tests/SwiftResendTests/SwiftResendTestsPrivate.swift
