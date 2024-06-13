@@ -35,7 +35,7 @@ public struct ResendBatchEmail {
     /// Custom headers to add to the email.
     public var headers: [EmailHeaders]?
 
-    init(from: EmailAddress,
+    public init(from: EmailAddress,
          to: [EmailAddress]? = nil,
          subject: String? = nil,
          cc: [EmailAddress]? = nil,
