@@ -38,12 +38,35 @@ let resendClient = ResendClient(httpClient: httpClient, apiKey: "YOUR_API_KEY")
 You can send a single email by creating a `ResendEmail` object and get the email ID in return. 
 Use it as followed:
 
+
 ~~~~swift
 import Resend
 
-let email = ResendEmail(...)
+let email: ResendEmail = .init(
+    from: .init(email: "hadi@example.com", name: "Hadi"),
+    to: ["hadi@domain.com"],
+    subject: "running xctest",
+    replyTo: [
+        "hadi@example.com",
+        "manager@example.com"
+    ],
+    text: "sending email from XCTest suit",
+    headers: [
+        .init(name: "X-Entity-Ref-ID", value: "234H3-44"),
+        .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
+    ],
+    attachments: [
+        .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx")
+    ],
+    tags: [
+        .init(name: "priority", value: "medium"),
+        .init(name: "department", value: "sales")
+    ]
+)
+
 let id = try await resendClient.emails.send(email)
 ~~~~
+`ResendEmail` supports both `text` and `html` content.
 
 You can send batch emails by creating a `ResendBatchEmail` object and
 send multiple emails at once. 
