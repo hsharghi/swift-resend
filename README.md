@@ -12,7 +12,7 @@
 SwiftResend is a Swift package used to communicate with the [Resend](https://resend.com) email sending platform API for Server Side Swift Apps.
 
 ## Setup
-Add the dependency to Package.swift:
+Add the dependency to your Package.swift:
 
 ~~~~swift
 dependencies: [
@@ -25,7 +25,8 @@ targets: [
     ]),
 ~~~~
 
-Register the config and the provider.
+### Register Configuration and Provider
+Configure the HTTP client and the Resend client:
 
 ~~~~swift
 let httpClient = HTTPClient(...)
@@ -35,9 +36,7 @@ let resendClient = ResendClient(httpClient: httpClient, apiKey: "YOUR_API_KEY")
 ## Using the API
 ### Email client
 
-You can send a single email by creating a `ResendEmail` object and get the email ID in return. 
-Use it as followed:
-
+You can send a single email by creating a `ResendEmail` object and retrieving the email ID in return.
 
 ~~~~swift
 import Resend
@@ -68,17 +67,18 @@ let id = try await resendClient.emails.send(email)
 ~~~~
 `ResendEmail` supports both `text` and `html` content.
 
-You can send batch emails by creating a `ResendBatchEmail` object and
-send multiple emails at once. 
-Attachments and Tags are not supported in current API via batch sending.
-Array of email IDs will be returned. 
+You can send multiple emails at once by creating a `ResendBatchEmail` object. 
+Attachments and Tags are not supported for batch sending. 
+An array of email IDs will be returned.
+
 
 ~~~~swift
 let emails = ResendBatchEmail(...)
 let ids = try await resendClient.emails.sendBatch(emails)
 ~~~~
 
-You can get an email info by providing the email ID received from the `send` or `batchSend` methods.
+### Retrieving Email Information
+You can retrieve information about a sent email by providing the email ID.
 
 ~~~~swift
 let emailInfo = try await resendClient.emails.get(emailId: id)
@@ -86,17 +86,16 @@ let emailInfo = try await resendClient.emails.get(emailId: id)
 
 
 ### Audience client
-Access to restful API of `Audience` is available via `AudienceClient`.
 
-For complete reference check out Resend API guide on Audiences [Resend Audience API](https://resend.com/docs/api-reference/audiences)
+Access to restful API of `Audience` is available via `AudienceClient`.
+Access the AudienceClient for managing audiences via the API. Refer to the [Resend Audience API](https://resend.com/docs/api-reference/audiences) for complete details.
 ~~~~swift
 let audience = try await resendClient.audiences.create(name: "marketing")
 ~~~~
 
 ### Contact client
-Access to restful API of `Contact` is available via `ContactClient`.
 
-For complete reference check out Resend API guide on Contacts [Resend Contact API](https://resend.com/docs/api-reference/contacts)
+Access the `ContactClient` for managing contacts via the API. Refer to the [Resend Contact API](https://resend.com/docs/api-reference/contacts) for complete details.
 ~~~~swift
 let contactId = try await resendClient.contacts.create(audienceId: audience.id,
                                                        email: "john@apple.com",
@@ -105,8 +104,8 @@ let contactId = try await resendClient.contacts.create(audienceId: audience.id,
 ~~~~
 
 ## Error handling
-If the request to the API failed for any reason a `ResendError` is `thrown` and has an `errors` property.
-Simply ensure you catch errors thrown like any other throwing function
+If a request to the API fails for any reason, a `ResendError` is thrown. Ensure you catch errors like any other throwing function.
+
 
 ~~~~swift
 do {
