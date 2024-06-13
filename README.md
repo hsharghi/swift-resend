@@ -1,6 +1,13 @@
 # SwiftResend
 
-![Swift](http://img.shields.io/badge/swift-5.7-brightgreen.svg)
+<p align="center">
+    <a href="https://swift.org">
+        <img src="http://img.shields.io/badge/Swift-5.7-brightgreen.svg" alt="Swift 5.7 Logo">
+    </a>
+    <a href="https://raw.githubusercontent.com/lloople/vapor-maker-commands/main/LICENSE">
+        <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+    </a>
+</p>
 
 SwiftResend is a Swift package used to communicate with the Resend email sending platform API for Server Side Swift Apps.
 
@@ -69,7 +76,7 @@ Access to restful API of `Contact` is available via `ContactClient`.
 For complete reference check out Resend API guide on Contacts [Resend Contact API](https://resend.com/docs/api-reference/contacts)
 ~~~~swift
 let contactId = try await resendClient.contacts.create(audienceId: audience.id,
-                                                       email: "john@apple.com,
+                                                       email: "john@apple.com",
                                                        firstName: "John",
                                                        subscriptionStatus: true)
 ~~~~
