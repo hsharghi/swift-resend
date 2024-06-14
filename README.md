@@ -33,7 +33,7 @@ let httpClient = HTTPClient(...)
 let resendClient = ResendClient(httpClient: httpClient, apiKey: "YOUR_API_KEY")
 ~~~~
 
-## Using the API
+## Usage
 ### Email client
 
 You can send a single email by creating a `ResendEmail` object and retrieving the email ID in return.
