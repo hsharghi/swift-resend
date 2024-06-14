@@ -85,14 +85,14 @@ let emailInfo = try await resendClient.emails.get(emailId: id)
 ~~~~
 
 
-### Audience client
+### Managing Audiences
 
 Access the `AudienceClient` for managing audiences via the API. Refer to the [Resend Audience API](https://resend.com/docs/api-reference/audiences) for complete details.
 ~~~~swift
 let audience = try await resendClient.audiences.create(name: "marketing")
 ~~~~
 
-### Contact client
+### Managing Contacts
 
 Access the `ContactClient` for managing contacts via the API. Refer to the [Resend Contact API](https://resend.com/docs/api-reference/contacts) for complete details.
 ~~~~swift
