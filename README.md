@@ -126,3 +126,7 @@ catch let error as ResendError {
 - [ ] Domains
 - [ ] API Keys
 
+## License
+
+This package is released under the MIT license. See [LICENSE](https://github.com/hsharghi/swift-resend/blob/main/LICENSE) for details.
+
