@@ -55,7 +55,8 @@ let email: ResendEmail = .init(
         .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
     ],
     attachments: [
-        .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx")
+        .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))),
+              filename: "sales.xlsx")
     ],
     tags: [
         .init(name: "priority", value: "medium"),
