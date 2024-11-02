@@ -25,6 +25,12 @@ enum APIPath {
     case contactUpdate(contactId: String, audienceId: String)
     case contactDelete(contactIdOrEmail: String, audienceId: String)
     case contactList(audienceId: String)
+    case domainCreate
+    case domainRetrieve(domainId: String)
+    case domainVerify(domainId: String)
+    case domainUpdate(domainId: String)
+    case domainList
+    case domainDelete(domainId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -56,6 +62,18 @@ enum APIPath {
             return path(of: "/audiences/\(audienceId)/contacts/\(contactIdOrEmail)")
         case .contactList(let audienceId):
             return path(of: "/audiences/\(audienceId)/contacts")
+        case .domainCreate:
+            return path(of: "/domains")
+        case .domainRetrieve(let domainId):
+            return path(of: "/domains/\(domainId)")
+        case .domainVerify(let domainId):
+            return path(of: "/domains/\(domainId)/verify")
+        case .domainUpdate(let domainId):
+            return path(of: "/domains/\(domainId)")
+        case .domainList:
+            return path(of: "/domains")
+        case .domainDelete(let domainId):
+            return path(of: "/domains/\(domainId)")
         }
     }
 }
