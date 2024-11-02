@@ -257,4 +257,26 @@ final class SwiftResendTests: XCTestCase {
         }
     }
 
+    // MARK: API Key Tests
+    func testCreateAPIKey() async throws {
+        let response = try await resend.apiKeys.create(name: "Test Key", permission: "full_access")
+        XCTAssertNotNil(response.id)
+        XCTAssertNotNil(response.token)
+    }
+    
+    func testListAPIKeys() async throws {
+        let keys = try await resend.apiKeys.list()
+        XCTAssertGreaterThan(keys.count, 0)
+    }
+    
+    func testDeleteAPIKey() async throws {
+        let keys = try await resend.apiKeys.list()
+        guard let key = keys.first else {
+            XCTFail("No API keys to delete")
+            return
+        }
+        
+        try await resend.apiKeys.delete(apiKeyId: key.id)
+    }
+
 }
