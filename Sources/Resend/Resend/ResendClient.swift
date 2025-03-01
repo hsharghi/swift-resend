@@ -54,6 +54,10 @@ public class ResendClient {
         ContactClient(httpClient: httpClient, apiKey: apiKey)
     }    
     
+    public var apiKeys: APIKeyClient {
+        APIKeyClient(httpClient: httpClient, apiKey: apiKey)
+    }
+  
     public var domains: DomainClient {
         DomainClient(httpClient: httpClient, apiKey: apiKey)
     }

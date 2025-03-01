@@ -25,6 +25,9 @@ enum APIPath {
     case contactUpdate(contactId: String, audienceId: String)
     case contactDelete(contactIdOrEmail: String, audienceId: String)
     case contactList(audienceId: String)
+    case apiKeyCreate
+    case apiKeyList
+    case apiKeyDelete(apiKeyId: String)
     case domainCreate
     case domainRetrieve(domainId: String)
     case domainVerify(domainId: String)
@@ -62,6 +65,12 @@ enum APIPath {
             return path(of: "/audiences/\(audienceId)/contacts/\(contactIdOrEmail)")
         case .contactList(let audienceId):
             return path(of: "/audiences/\(audienceId)/contacts")
+        case .apiKeyCreate:
+            return path(of: "/api-keys")
+        case .apiKeyList:
+            return path(of: "/api-keys")
+        case .apiKeyDelete(let apiKeyId):
+            return path(of: "/api-keys/\(apiKeyId)")
         case .domainCreate:
             return path(of: "/domains")
         case .domainRetrieve(let domainId):
