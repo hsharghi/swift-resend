@@ -124,8 +124,9 @@ catch let error as ResendError {
 - [x] Emails
 - [x] Audiences
 - [x] Contacts
-- [ ] Domains
-- [ ] API Keys
+- [x] Domains
+- [x] API Keys
+- [ ] Broadcasts
 
 ## License
 
