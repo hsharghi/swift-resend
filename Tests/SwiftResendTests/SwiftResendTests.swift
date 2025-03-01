@@ -241,7 +241,6 @@ final class SwiftResendTests: XCTestCase {
 
     }
 
-    
     // MARK: Helper
     /// Delete all audiences created via tests
     func testDeleteAllAudience() async throws {
@@ -252,7 +251,7 @@ final class SwiftResendTests: XCTestCase {
                 _ = try await resend.audiences.delete(audienceId: audience.id)
                 try await Task.sleep(for: .milliseconds(600))
             } catch {
-                
+
             }
         }
     }
@@ -277,6 +276,37 @@ final class SwiftResendTests: XCTestCase {
         }
         
         try await resend.apiKeys.delete(apiKeyId: key.id)
+    }
+     
+    // MARK: Domain Tests   
+    func testCreateDomain() async throws {
+        let response = try await resend.domains.create(name: "example.com")
+        XCTAssertNotNil(response.id)
+        XCTAssertEqual(response.name, "example.com")
+    }
+    
+    func testRetrieveDomain() async throws {
+        let domain = try await resend.domains.retrieve(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
+        XCTAssertEqual(domain.id, "d91cd9bd-1176-453e-8fc1-35364d380206")
+    }
+    
+    func testVerifyDomain() async throws {
+        let response = try await resend.domains.verify(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
+        XCTAssertEqual(response.id, "d91cd9bd-1176-453e-8fc1-35364d380206")
+    }
+    
+    func testUpdateDomain() async throws {
+        let domain = try await resend.domains.update(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206", clickTracking: true, openTracking: true)
+        XCTAssertEqual(domain.id, "d91cd9bd-1176-453e-8fc1-35364d380206")
+    }
+    
+    func testListDomains() async throws {
+        let domains = try await resend.domains.list()
+        XCTAssertGreaterThan(domains.count, 0)
+    }
+    
+    func testDeleteDomain() async throws {
+        try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
     }
 
 }

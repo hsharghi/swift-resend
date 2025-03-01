@@ -57,6 +57,10 @@ public class ResendClient {
     public var apiKeys: APIKeyClient {
         APIKeyClient(httpClient: httpClient, apiKey: apiKey)
     }
+  
+    public var domains: DomainClient {
+        DomainClient(httpClient: httpClient, apiKey: apiKey)
+    }
     
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
