@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct ResendEmailCancel: Encodable {
+internal struct ResendEmailCancel: Encodable {
     
     /// Id of the email to be deleted.
     /// Id is a UUID string
