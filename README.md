@@ -1,13 +1,6 @@
 # SwiftResend
+[![Version](https://img.shields.io/github/v/release/hsharghi/swift-resend)](https://swift.org)[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fhsharghi%2Fswift-resend%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/hsharghi/swift-resend)[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fhsharghi%2Fswift-resend%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/hsharghi/swift-resend)
 
-<p align="center">
-    <a href="https://swift.org">
-        <img src="http://img.shields.io/badge/Swift-5.7-brightgreen.svg" alt="Swift 5.7 Logo">
-    </a>
-    <a href="https://raw.githubusercontent.com/lloople/vapor-maker-commands/main/LICENSE">
-        <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-    </a>
-</p>
 
 SwiftResend is a Swift package used to communicate with the [Resend](https://resend.com) email sending platform API for Server Side Swift Apps.
 
