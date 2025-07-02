@@ -19,6 +19,13 @@ final class SwiftResendTests: XCTestCase {
         try await httpClient.shutdown()
     }
 
+    
+    func testEmailAddressFromString() {
+        let email1: EmailAddress = "hadi<hadi123@example.com>"
+        XCTAssertEqual(email1.email, "hadi123@example.com")
+        XCTAssertEqual(email1.name, "hadi")
+    }
+    
     func testSend() async throws {
         let id = try await resend.emails.send(email: .init(
             from: .init(email: "hadi@example.com", name: "Hadi"),
