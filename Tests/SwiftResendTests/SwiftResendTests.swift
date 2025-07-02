@@ -44,6 +44,34 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertNotNil(id)
     }
     
+    func testSendWithScheduleInNaturalLanuguage() async throws {
+        let id = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@softworks.ir", name: "Hadi"),
+            to: ["hsharghi@gmail.com"],
+            subject: "send later",
+            scheduledAt: "in an hour",
+            text: "sending email from XCTest suit with schedule",
+        ))
+        XCTAssertNotNil(id)
+        
+        let info = try await resend.emails.get(emailId: id)
+        XCTAssertEqual("scheduled", info.lastEvent)
+    }
+    
+    func testSendWithScheduleWithDate() async throws {
+        let id = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@softworks.ir", name: "Hadi"),
+            to: ["hsharghi@gmail.com"],
+            subject: "send later",
+            scheduledAt: .date(Date(timeIntervalSinceNow: 60*60)),
+            text: "sending email from XCTest suit with schedule",
+        ))
+        XCTAssertNotNil(id)
+        
+        let info = try await resend.emails.get(emailId: id)
+        XCTAssertEqual("scheduled", info.lastEvent)
+    }
+    
     func testSendBatch() async throws {
         let response = try await resend.emails.sendBatch(emails: [
         .init(
