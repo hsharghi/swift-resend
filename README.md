@@ -41,29 +41,51 @@ You can send a single email by creating a `ResendEmail` object and retrieving th
 ~~~~swift
 import Resend
 
-let email: ResendEmail = .init(
-    from: .init(email: "hadi@example.com", name: "Hadi"),
-    to: ["hadi@domain.com"],
-    subject: "running xctest",
-    replyTo: [
-        "hadi@example.com",
-        "manager@example.com"
-    ],
-    text: "sending email from XCTest suit",
-    headers: [
-        .init(name: "X-Entity-Ref-ID", value: "234H3-44"),
-        .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
-    ],
-    attachments: [
-        .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))),
-              filename: "sales.xlsx")
-    ],
-    tags: [
-        .init(name: "priority", value: "medium"),
-        .init(name: "department", value: "sales")
-    ]
-)
+let email = ResendEmail(
+        from: .init(email: "hadi@example.com", name: "Hadi"),
+        to: ["hadi@domain.com"],
+        subject: "running xctest",
+        replyTo: [
+            "hadi@example.com",
+            "manager@example.com"
+        ],
+        text: "sending email via Resend API",
+        headers: [
+            .init(name: "X-Entity-Ref-ID", value: "234H3-44"),
+            .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
+        ],
+        attachments: [
+            .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))),
+                filename: "sales.xlsx")
+        ],
+        tags: [
+            .init(name: "priority", value: "medium"),
+            .init(name: "department", value: "sales")
+        ]
+    )
+~~~~
 
+Emails can be scheduled to be sent later. The date should be a `Date` object or a string in natural language (e.g.: in 1 min)
+
+~~~~swift
+let email = ResendEmail(
+        to: ["hadi@domain.com"],
+        subject: "sending scheduled email",
+        scheduledAt: "in an hour",
+        text: "sending email via Resend API",
+    )
+
+let email = ResendEmail(
+        to: ["hadi@domain.com"],
+        subject: "sending scheduled email",
+        scheduledAt: .date(Date(timeIntervalSinceNow: 60\*60)),
+        text: "sending email via Resend API",
+    )
+~~~~
+
+Now the email can be sent using resend client
+
+~~~~swift
 let id = try await resendClient.emails.send(email)
 ~~~~
 `ResendEmail` supports both `text` and `html` content.

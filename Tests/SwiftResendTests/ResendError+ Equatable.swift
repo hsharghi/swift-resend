@@ -8,7 +8,7 @@
 import Foundation
 @testable import Resend
 
-extension ResendError: Equatable {
+extension ResendError: @retroactive Equatable {
     public static func == (lhs: ResendError, rhs: ResendError) -> Bool {
         lhs.identifier == rhs.identifier
     }
