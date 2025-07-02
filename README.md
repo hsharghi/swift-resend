@@ -64,6 +64,7 @@ let email = ResendEmail(
         ]
     )
 ~~~~
+#### `ResendEmail` supports both `text` and `html` content.
 
 Emails can be scheduled to be sent later. The date should be a `Date` object or a string in natural language (e.g.: in 1 min)
 
@@ -88,7 +89,17 @@ Now the email can be sent using resend client
 ~~~~swift
 let id = try await resendClient.emails.send(email)
 ~~~~
-`ResendEmail` supports both `text` and `html` content.
+
+Scheduled emails can be updated to new schedule or be canceled.
+~~~~swift
+let id = try await resendClient.emails.send(scheduledEmail)
+
+// update schedule 
+_ = try await resendClient.emails.update(emailId: id, scheduledAt: "in 5 hours")
+
+// cancel 
+_ = try await resendClient.emails.cancel(emailId: id)
+~~~~
 
 You can send multiple emails at once by creating a `ResendBatchEmail` object. 
 Attachments and Tags are not supported for batch sending. 
