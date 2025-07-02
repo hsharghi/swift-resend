@@ -7,6 +7,9 @@
 
 import Foundation
 
+/// Type of email schedule.
+/// It can be a `Date` object or just a string in natural language.
+/// e.g. "in an hour"
 public enum EmailSchedule {
     case date(Date)
     case string(String)
@@ -19,7 +22,8 @@ extension EmailSchedule: ExpressibleByStringLiteral {
 }
 
 
-// Custom Codable implementation
+/// Custom Codable implementation to convert `Date` object to proper date format
+/// Date format shoudl be ISO 8601
 extension EmailSchedule: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
