@@ -86,16 +86,14 @@ public class EmailClient: ResendClient {
     /// Cancel a scheduled email
     /// Id of the email will be returned on successful cancelation
     public func cancel(emailId: String) async throws -> String {
-        let cancelRequest = ResendEmailCancel(id: emailId)
         let response = try await httpClient.execute(
             request: .init(
                 url: APIPath.getPath(for: .cancleSchedule(emailId: emailId)),
                 method: .POST,
                 headers: getAuthHeader(),
-                body: .data(encoder.encode(cancelRequest))
             )
         ).get()
-        let cancelResponse = try parseResponse(response, to: EmailSentResponse.self)
-        return cancelResponse.id
+        let canceledEmail = try parseResponse(response, to: EmailSentResponse.self)
+        return canceledEmail.id
     }
 }
