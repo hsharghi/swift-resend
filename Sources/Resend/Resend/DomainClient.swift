@@ -49,7 +49,13 @@ public class DomainClient: ResendClient {
     }
     
     /// Update a domain
-    public func update(domainId: String, clickTracking: Bool, openTracking: Bool, tls: String = "opportunistic") async throws -> Domain {
+    /// - Parameters:
+    ///   - domainId: The ID of the domain to update
+    ///   - clickTracking: Track clicks within the body of each HTML email
+    ///   - openTracking: Track the open rate of each email
+    ///   - tls: TLS policy (.opportunistic or .enforced)
+    /// - Returns: The updated Domain object
+    public func update(domainId: String, clickTracking: Bool, openTracking: Bool, tls: DomainTLSMode = .opportunistic) async throws -> Domain {
         let body = DomainUpdate(clickTracking: clickTracking, openTracking: openTracking, tls: tls)
         let response = try await httpClient.execute(
             request: .init(
@@ -77,7 +83,9 @@ public class DomainClient: ResendClient {
     }
     
     /// Delete a domain
-    public func delete(domainId: String) async throws {
+    /// - Parameter domainId: The ID of the domain to delete
+    /// - Returns: DomainDeleteResponse containing the result of the deletion
+    public func delete(domainId: String) async throws -> DomainDeleteResponse {
         let response = try await httpClient.execute(
             request: .init(
                 url: APIPath.getPath(for: .domainDelete(domainId: domainId)),
@@ -86,8 +94,6 @@ public class DomainClient: ResendClient {
             )
         ).get()
         
-        guard response.status == .ok else {
-            throw ResendError.unknownError
-        }
+        return try parseResponse(response, to: DomainDeleteResponse.self)
     }
 } 
