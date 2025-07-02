@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct ResendEmailUpdate: Encodable {
+internal struct ResendEmailUpdate: Encodable {
     
     /// Id of the email to update the schedule
     /// Id is a UUID string
