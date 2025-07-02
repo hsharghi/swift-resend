@@ -115,6 +115,20 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(response.replyTo?.count, 2)        
         
     }
+
+    func testCancelScheduledEmail() async throws {
+        let id = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@softworks.ir", name: "Hadi"),
+            to: ["hsharghi@gmail.com"],
+            subject: "cancel me",
+            scheduledAt: "in 1 hour",
+            text: "This email is scheduled and will be canceled."
+        ))
+        XCTAssertNotNil(id)
+
+        let canceledId = try await resend.emails.cancel(emailId: id)
+        XCTAssertEqual(canceledId, id)
+    }
     
     
     // Mark: Audience Tests
