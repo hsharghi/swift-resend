@@ -23,7 +23,7 @@ public struct EmailAddress: Decodable {
 
 extension EmailAddress: ExpressibleByStringLiteral {
     public init(stringLiteral email: StringLiteralType) {
-        self.init(email: email)
+        self.init(from: email)
     }
 }
 
