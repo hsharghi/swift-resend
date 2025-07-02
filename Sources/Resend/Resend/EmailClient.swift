@@ -67,8 +67,8 @@ public class EmailClient: ResendClient {
     
     /// Update schedule date
     /// scheduledAt parameter can be in natural language (e.g.: in 1 min) or `Date` object
-    /// Id of the email will be in the reponse
-    public func update(emailId: String, scheduledAt: EmailSchedule) async throws -> EmailScheduleResponse {
+    /// Id of the email will be returned on successful update
+    public func update(emailId: String, scheduledAt: EmailSchedule) async throws -> String {
         let updateRequest = ResendEmailUpdate(id: emailId, scheduledAt: scheduledAt)
         let response = try await httpClient.execute(
             request: .init(
@@ -78,12 +78,14 @@ public class EmailClient: ResendClient {
                 body: .data(encoder.encode(updateRequest))
             )
         ).get()
-        return try parseResponse(response, to: EmailScheduleResponse.self)
+        let updateResponse = try parseResponse(response, to: EmailSentResponse.self)
+        return updateResponse.id
+
     }
 
     /// Cancel a scheduled email
-    /// Id of the email will be in the reponse
-    public func cancel(emailId: String) async throws -> EmailScheduleResponse {
+    /// Id of the email will be returned on successful cancelation
+    public func cancel(emailId: String) async throws -> String {
         let cancelRequest = ResendEmailCancel(id: emailId)
         let response = try await httpClient.execute(
             request: .init(
@@ -93,6 +95,7 @@ public class EmailClient: ResendClient {
                 body: .data(encoder.encode(cancelRequest))
             )
         ).get()
-        return try parseResponse(response, to: EmailScheduleResponse.self)
+        let cancelResponse = try parseResponse(response, to: EmailSentResponse.self)
+        return cancelResponse.id
     }
 }

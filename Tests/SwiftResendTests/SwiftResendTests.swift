@@ -47,7 +47,7 @@ final class SwiftResendTests: XCTestCase {
     func testSendWithScheduleInNaturalLanuguage() async throws {
         let id = try await resend.emails.send(email: .init(
             from: .init(email: "hadi@softworks.ir", name: "Hadi"),
-            to: ["hsharghi@gmail.com"],
+            to: ["hadi@domain.com"],
             subject: "send later",
             scheduledAt: "in an hour",
             text: "sending email from XCTest suit with schedule",
@@ -60,8 +60,8 @@ final class SwiftResendTests: XCTestCase {
     
     func testSendWithScheduleWithDate() async throws {
         let id = try await resend.emails.send(email: .init(
-            from: .init(email: "hadi@softworks.ir", name: "Hadi"),
-            to: ["hsharghi@gmail.com"],
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
             subject: "send later",
             scheduledAt: .date(Date(timeIntervalSinceNow: 60*60)),
             text: "sending email from XCTest suit with schedule",
@@ -70,6 +70,41 @@ final class SwiftResendTests: XCTestCase {
         
         let info = try await resend.emails.get(emailId: id)
         XCTAssertEqual("scheduled", info.lastEvent)
+    }
+    
+    
+    func testUpdateScheduledEmail() async throws {
+        let id = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "send later",
+            scheduledAt: .date(Date(timeIntervalSinceNow: 60*60)),
+            text: "sending email from XCTest suit with schedule",
+        ))
+        
+        let id2 = try await resend.emails.update(emailId: id, scheduledAt: "in three hours")
+        XCTAssertEqual(id, id2)
+        
+        let info = try await resend.emails.get(emailId: id)
+        XCTAssertEqual("scheduled", info.lastEvent)
+
+    }
+    
+    func testCancelScheduledEmail() async throws {
+        let id = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "send later",
+            scheduledAt: .date(Date(timeIntervalSinceNow: 60*60)),
+            text: "sending email from XCTest suit with schedule",
+        ))
+        
+        let id2 = try await resend.emails.cancel(emailId: id)
+        XCTAssertEqual(id, id2)
+        
+        let info = try await resend.emails.get(emailId: id)
+        XCTAssertEqual("canceled", info.lastEvent)
+
     }
     
     func testSendBatch() async throws {
