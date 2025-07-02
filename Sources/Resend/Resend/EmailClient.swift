@@ -64,4 +64,17 @@ public class EmailClient: ResendClient {
         return try parseResponse(response, to: EmailGetResponse.self)
         
     }
+
+    /// Cancel a scheduled email
+    public func cancel(emailId: String) async throws -> String {
+        let response = try await httpClient.execute(
+            request: .init(
+                url: APIPath.getPath(for: .emailCancel(emailId: emailId)),
+                method: .POST,
+                headers: getAuthHeader()
+            )
+        ).get()
+        let canceledEmail = try parseResponse(response, to: EmailCanceledResponse.self)
+        return canceledEmail.id
+    }
 }
