@@ -379,4 +379,94 @@ final class SwiftResendTests: XCTestCase {
         try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
     }
 
+    // MARK: Broadcast Tests
+    func testCreateBroadcast() async throws {
+        // Create a test audience
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: "Tester <tester@example.com>",
+            subject: "Test Broadcast",
+            html: "<h1>Hello {{{FIRST_NAME|there}}}</h1>",
+            text: "Hello there",
+            name: "Test Broadcast"
+        )
+        let response = try await resend.broadcasts.create(broadcast: broadcast)
+        XCTAssertNotNil(response.id)
+    }
+
+    func testListBroadcasts() async throws {
+        let broadcasts = try await resend.broadcasts.list()
+        XCTAssertNotNil(broadcasts)
+        // Not asserting count, as it depends on environment
+    }
+
+    func testGetBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-get")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: "Tester <tester@example.com>",
+            subject: "Test Broadcast Get",
+            html: "<h1>Hello</h1>",
+            name: "Test Broadcast Get"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let getResponse = try await resend.broadcasts.get(broadcastId: createResponse.id)
+        XCTAssertEqual(getResponse.id, createResponse.id)
+        XCTAssertEqual(getResponse.audienceId, audience.id)
+        XCTAssertEqual(getResponse.subject, "Test Broadcast Get")
+    }
+
+    func testUpdateBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-update")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: "Tester <tester@example.com>",
+            subject: "Test Broadcast Update",
+            html: "<h1>Before Update</h1>",
+            text: "Before Update",
+            name: "Test Broadcast Update"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let update = BroadcastUpdate(
+            id: createResponse.id,
+            subject: "Test Broadcast Updated",
+            html: "<h1>After Update</h1>"
+        )
+        let updateResponse = try await resend.broadcasts.update(update: update)
+        XCTAssertEqual(updateResponse.id, createResponse.id)
+    }
+
+    func testSendBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-send")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: "Tester <tester@example.com>",
+            subject: "Test Broadcast Send",
+            html: "<h1>Send Test</h1>",
+            name: "Test Broadcast Send"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let sendResponse = try await resend.broadcasts.send(broadcastId: createResponse.id)
+        XCTAssertEqual(sendResponse.id, createResponse.id)
+    }
+
+    func testDeleteBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-delete")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: "Tester <tester@example.com>",
+            subject: "Test Broadcast Delete",
+            html: "<h1>Delete Test</h1>",
+            name: "Test Broadcast Delete"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let deleteResponse = try await resend.broadcasts.delete(broadcastId: createResponse.id)
+        XCTAssertEqual(deleteResponse.id, createResponse.id)
+    }
+
 }
