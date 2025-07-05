@@ -112,6 +112,12 @@ public class ResendClient {
             throw ResendError.validationError(errorResponse.message)
         case "restricted_api_key":
             throw ResendError.restrictedApiKey(errorResponse.message)
+        case "invalid_idempotency_key":
+            throw ResendError.invalidIdempotencyKey(errorResponse.message)
+        case "invalid_idempotent_request":
+            throw ResendError.invalidIdempotentRequest(errorResponse.message)
+        case "concurrent_idempotent_requests":
+            throw ResendError.concurrentIdempotentRequests(errorResponse.message)
         default:
             throw ResendError.unknownError
         }
