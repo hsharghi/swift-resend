@@ -42,6 +42,18 @@ public class ResendClient {
         return headers
     }
     
+    func getHeadersWithIdempotencyKey(_ idempotencyKey: String?) throws -> HTTPHeaders {
+        var headers = getAuthHeader()
+        if let key = idempotencyKey {
+            // Validate idempotency key length (1-256 characters)
+            if key.count < 1 || key.count > 256 {
+                throw ResendError.invalidIdempotencyKey("The idempotency key must be between 1-256 characters. Retry with a valid key or without supplying an idempotency key.")
+            }
+            headers.add(name: "Idempotency-Key", value: key)
+        }
+        return headers
+    }
+    
     public var emails: EmailClient {
         EmailClient(httpClient: httpClient, apiKey: apiKey)
     }    
