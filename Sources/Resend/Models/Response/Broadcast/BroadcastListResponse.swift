@@ -9,7 +9,7 @@ public struct BroadcastSummary: Decodable {
     public var audienceId: String
     public var status: String
     public var createdAt: Date
-    public var scheduledAt: Date?
+    public var scheduledAt: EmailSchedule?
     public var sentAt: Date?
 
     private enum CodingKeys: String, CodingKey {
