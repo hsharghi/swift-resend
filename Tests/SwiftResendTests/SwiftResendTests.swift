@@ -379,6 +379,166 @@ final class SwiftResendTests: XCTestCase {
         try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
     }
 
+    // MARK: Broadcast Tests
+    func testCreateBroadcast() async throws {
+        // Create a test audience
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: EmailAddress(email: "tester@example.com", name: "Tester"),
+            subject: "Test Broadcast",
+            html: "<h1>Hello {{{FIRST_NAME|there}}}</h1>",
+            text: "Hello there",
+            name: "Test Broadcast"
+        )
+        let response = try await resend.broadcasts.create(broadcast: broadcast)
+        XCTAssertNotNil(response.id)
+    }
+
+    func testListBroadcasts() async throws {
+        let broadcasts = try await resend.broadcasts.list()
+        XCTAssertNotNil(broadcasts)
+        // Not asserting count, as it depends on environment
+    }
+
+    func testGetBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-get")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: EmailAddress(email: "tester@example.com", name: "Tester"),
+            subject: "Test Broadcast Get",
+            html: "<h1>Hello</h1>",
+            name: "Test Broadcast Get"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let getResponse = try await resend.broadcasts.get(broadcastId: createResponse.id)
+        XCTAssertEqual(getResponse.id, createResponse.id)
+        XCTAssertEqual(getResponse.audienceId, audience.id)
+        XCTAssertEqual(getResponse.subject, "Test Broadcast Get")
+    }
+
+    func testUpdateBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-update")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: EmailAddress(email: "tester@example.com", name: "Tester"),
+            subject: "Test Broadcast Update",
+            html: "<h1>Before Update</h1>",
+            text: "Before Update",
+            name: "Test Broadcast Update"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let update = BroadcastUpdate(
+            id: createResponse.id,
+            subject: "Test Broadcast Updated",
+            html: "<h1>After Update</h1>"
+        )
+        let updateResponse = try await resend.broadcasts.update(update: update)
+        XCTAssertEqual(updateResponse.id, createResponse.id)
+    }
+
+    func testSendBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-send")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: EmailAddress(email: "tester@example.com", name: "Tester"),
+            subject: "Test Broadcast Send",
+            html: "<h1>Send Test</h1>",
+            name: "Test Broadcast Send"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let sendResponse = try await resend.broadcasts.send(broadcastId: createResponse.id)
+        XCTAssertEqual(sendResponse.id, createResponse.id)
+    }
+
+    func testDeleteBroadcast() async throws {
+        // Create a test audience and broadcast
+        let audience = try await resend.audiences.create(name: "test-broadcast-audience-delete")
+        let broadcast = BroadcastCreate(
+            audienceId: audience.id,
+            from: EmailAddress(email: "tester@example.com", name: "Tester"),
+            subject: "Test Broadcast Delete",
+            html: "<h1>Delete Test</h1>",
+            name: "Test Broadcast Delete"
+        )
+        let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
+        let deleteResponse = try await resend.broadcasts.delete(broadcastId: createResponse.id)
+        XCTAssertEqual(deleteResponse.id, createResponse.id)
+    }
+    
+    // MARK: EmailSchedule Decoding Tests
+    func testEmailScheduleDecodingInBroadcastSummary() throws {
+        // Test decoding with Date
+        let dateJSON = """
+        {
+            "id": "test-id",
+            "audience_id": "audience-id",
+            "status": "draft",
+            "created_at": "2024-01-01T00:00:00Z",
+            "scheduled_at": "2024-01-02T00:00:00Z",
+            "sent_at": "2024-01-03T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let broadcastWithDate = try decoder.decode(BroadcastSummary.self, from: dateJSON)
+        XCTAssertEqual(broadcastWithDate.id, "test-id")
+        XCTAssertEqual(broadcastWithDate.audienceId, "audience-id")
+        XCTAssertEqual(broadcastWithDate.status, "draft")
+        
+        if case .date(let date) = broadcastWithDate.scheduledAt {
+            let expectedDate = ISO8601DateFormatter().date(from: "2024-01-02T00:00:00Z")!
+            XCTAssertEqual(date, expectedDate)
+        } else {
+            XCTFail("Expected scheduledAt to be .date case")
+        }
+        
+        // Test decoding with String
+        let stringJSON = """
+        {
+            "id": "test-id-2",
+            "audience_id": "audience-id-2",
+            "status": "scheduled",
+            "created_at": "2024-01-01T00:00:00Z",
+            "scheduled_at": "in 2 hours",
+            "sent_at": null
+        }
+        """.data(using: .utf8)!
+        
+        let broadcastWithString = try decoder.decode(BroadcastSummary.self, from: stringJSON)
+        XCTAssertEqual(broadcastWithString.id, "test-id-2")
+        XCTAssertEqual(broadcastWithString.audienceId, "audience-id-2")
+        XCTAssertEqual(broadcastWithString.status, "scheduled")
+        
+        if case .string(let scheduleString) = broadcastWithString.scheduledAt {
+            XCTAssertEqual(scheduleString, "in 2 hours")
+        } else {
+            XCTFail("Expected scheduledAt to be .string case")
+        }
+        
+        // Test decoding with null scheduledAt
+        let nullJSON = """
+        {
+            "id": "test-id-3",
+            "audience_id": "audience-id-3",
+            "status": "sent",
+            "created_at": "2024-01-01T00:00:00Z",
+            "scheduled_at": null,
+            "sent_at": "2024-01-03T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        
+        let broadcastWithNull = try decoder.decode(BroadcastSummary.self, from: nullJSON)
+        XCTAssertEqual(broadcastWithNull.id, "test-id-3")
+        XCTAssertEqual(broadcastWithNull.audienceId, "audience-id-3")
+        XCTAssertEqual(broadcastWithNull.status, "sent")
+        XCTAssertNil(broadcastWithNull.scheduledAt)
+
     func testSendWithIdempotencyKey() async throws {
         let id = try await resend.emails.send(
             email: .init(

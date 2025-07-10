@@ -129,6 +129,63 @@ let contactId = try await resendClient.contacts.create(audienceId: audience.id,
                                                        subscriptionStatus: true)
 ~~~~
 
+### Managing Broadcasts
+
+Access the `BroadcastClient` for managing broadcasts via the API. Broadcasts allow you to send emails to entire audiences. Refer to the [Resend Broadcast API](https://resend.com/docs/api-reference/broadcasts) for complete details.
+
+#### Creating a Broadcast
+~~~~swift
+let broadcast = BroadcastCreate(
+    audienceId: audience.id,
+    from: EmailAddress(email: "sender@example.com", name: "Sender Name"),
+    subject: "Welcome to our newsletter",
+    replyTo: [
+        EmailAddress(email: "support@example.com", name: "Support Team")
+    ],
+    html: "<h1>Welcome {{{FIRST_NAME|there}}}!</h1><p>Thank you for subscribing.</p>",
+    text: "Welcome! Thank you for subscribing.",
+    name: "Welcome Newsletter"
+)
+let broadcastId = try await resendClient.broadcasts.create(broadcast: broadcast)
+~~~~
+
+#### Listing Broadcasts
+~~~~swift
+let broadcasts = try await resendClient.broadcasts.list()
+for broadcast in broadcasts.data {
+    print("Broadcast: \(broadcast.id) - Status: \(broadcast.status)")
+}
+~~~~
+
+#### Getting Broadcast Details
+~~~~swift
+let broadcast = try await resendClient.broadcasts.get(broadcastId: broadcastId)
+print("Broadcast subject: \(broadcast.subject)")
+print("From: \(broadcast.from.name) <\(broadcast.from.email)>")
+~~~~
+
+#### Updating a Broadcast
+~~~~swift
+let update = BroadcastUpdate(
+    id: broadcastId,
+    subject: "Updated Subject",
+    html: "<h1>Updated Content</h1>"
+)
+let updatedBroadcast = try await resendClient.broadcasts.update(update: update)
+~~~~
+
+#### Sending a Broadcast
+~~~~swift
+let sentBroadcast = try await resendClient.broadcasts.send(broadcastId: broadcastId)
+print("Broadcast sent with ID: \(sentBroadcast.id)")
+~~~~
+
+#### Deleting a Broadcast
+~~~~swift
+let deletedBroadcast = try await resendClient.broadcasts.delete(broadcastId: broadcastId)
+print("Broadcast deleted: \(deletedBroadcast.id)")
+~~~~
+
 ## Error handling
 If a request to the API fails for any reason, a `ResendError` is thrown. Ensure you catch errors like any other throwing function.
 
@@ -152,7 +209,7 @@ catch let error as ResendError {
 - [x] Contacts
 - [x] Domains
 - [x] API Keys
-- [ ] Broadcasts
+- [x] Broadcasts
 
 ## License
 

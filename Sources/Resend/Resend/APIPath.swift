@@ -35,6 +35,12 @@ enum APIPath {
     case domainUpdate(domainId: String)
     case domainList
     case domainDelete(domainId: String)
+    case broadcastCreate
+    case broadcastGet(broadcastId: String)
+    case broadcastUpdate(broadcastId: String)
+    case broadcastSend(broadcastId: String)
+    case broadcastDelete(broadcastId: String)
+    case broadcastList
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -86,6 +92,18 @@ enum APIPath {
             return path(of: "/domains")
         case .domainDelete(let domainId):
             return path(of: "/domains/\(domainId)")
+        case .broadcastCreate:
+            return path(of: "/broadcasts")
+        case .broadcastGet(let broadcastId):
+            return path(of: "/broadcasts/\(broadcastId)")
+        case .broadcastUpdate(let broadcastId):
+            return path(of: "/broadcasts/\(broadcastId)")
+        case .broadcastSend(let broadcastId):
+            return path(of: "/broadcasts/\(broadcastId)/send")
+        case .broadcastDelete(let broadcastId):
+            return path(of: "/broadcasts/\(broadcastId)")
+        case .broadcastList:
+            return path(of: "/broadcasts")
         }
     }
 }
