@@ -27,6 +27,9 @@ public enum ResendError: Error {
     case validationError(String)
     case internalServerError(String)
     case decodingError(String)
+    case invalidIdempotencyKey(String)
+    case invalidIdempotentRequest(String)
+    case concurrentIdempotentRequests(String)
     case unknownError
     
     
@@ -63,6 +66,12 @@ public enum ResendError: Error {
             return "internal_server_error"
         case .decodingError:
             return "decoding_error"
+        case .invalidIdempotencyKey:
+            return "invalid_idempotency_key"
+        case .invalidIdempotentRequest:
+            return "invalid_idempotent_request"
+        case .concurrentIdempotentRequests:
+            return "concurrent_idempotent_requests"
         case .unknownError:
             return "unknown_error"
         }
@@ -85,7 +94,10 @@ public enum ResendError: Error {
                 .dailyQuotaExceeded(let message),
                 .validationError(let message),
                 .decodingError(let message),
-                .internalServerError(let message):
+                .internalServerError(let message),
+                .invalidIdempotencyKey(let message),
+                .invalidIdempotentRequest(let message),
+                .concurrentIdempotentRequests(let message):
             return message
         case .unknownError:
             return "Unknown error"
@@ -125,6 +137,12 @@ public enum ResendError: Error {
             return "Try the request again later. If the error does not resolve, check our status page for service updates."
         case .decodingError:
             return ""
+        case .invalidIdempotencyKey:
+            return "The idempotency key must be between 1-256 characters. Retry with a valid key or without supplying an idempotency key."
+        case .invalidIdempotentRequest:
+            return "This idempotency key has already been used on a request with a different payload. Retry with a different key or payload."
+        case .concurrentIdempotentRequests:
+            return "Another request with the same idempotency key is currently in progress. Retry this request later."
         case .unknownError:
             return ""
         }

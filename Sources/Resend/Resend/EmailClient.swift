@@ -15,38 +15,34 @@ public class EmailClient: ResendClient {
     }
     
     /// Send email
-    public func send(email: ResendEmail) async throws -> String {
-        
+    public func send(email: ResendEmail, idempotencyKey: String? = nil) async throws -> String {
+        let headers = try getHeadersWithIdempotencyKey(idempotencyKey)
         let response = try await httpClient.execute(
             request: .init(
                 url: APIPath.getPath(for: .emailSend),
                 method: .POST,
-                headers: getAuthHeader(),
+                headers: headers,
                 body: .data(encoder.encode(email))
             )
         ).get()
-        
         let sentEmail = try parseResponse(response, to: EmailSentResponse.self)
         return sentEmail.id
-        
     }
 
     /// Send batch emails
     /// Attachments and Tags are not supported in batch sending emails
     /// Id of successfully sent emails will be returned
-    public func sendBatch(emails: [ResendBatchEmail]) async throws -> [String] {
-                
+    public func sendBatch(emails: [ResendBatchEmail], idempotencyKey: String? = nil) async throws -> [String] {
+        let headers = try getHeadersWithIdempotencyKey(idempotencyKey)
         let response = try await httpClient.execute(
             request: .init(
                 url: APIPath.getPath(for: .emailBatchSend),
                 method: .POST,
-                headers: getAuthHeader(),
+                headers: headers,
                 body: .data(encoder.encode(emails))
             )
         ).get()
-        
         return try parseBatchSentResponse(response)
-
     }
     
     /// Get email info
