@@ -538,6 +538,65 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(broadcastWithNull.audienceId, "audience-id-3")
         XCTAssertEqual(broadcastWithNull.status, "sent")
         XCTAssertNil(broadcastWithNull.scheduledAt)
+
+    func testSendWithIdempotencyKey() async throws {
+        let id = try await resend.emails.send(
+            email: .init(
+                from: .init(email: "hadi@example.com", name: "Hadi"),
+                to: ["hadi@domain.com"],
+                subject: "idempotency test",
+                text: "test with idempotency key"
+            ),
+            idempotencyKey: "test-key-123"
+        )
+        XCTAssertNotNil(id)
+    }
+
+    func testSendBatchWithIdempotencyKey() async throws {
+        let response = try await resend.emails.sendBatch(
+            emails: [
+                .init(
+                    from: .init(email: "hadi@example.com", name: "Hadi"),
+                    to: ["hadi@domain.com"],
+                    subject: "batch idempotency test",
+                    text: "test batch with idempotency key"
+                )
+            ],
+            idempotencyKey: "batch-key-456"
+        )
+        XCTAssertEqual(response.count, 1)
+    }
+
+    func testSendWithInvalidIdempotencyKey() async throws {
+        let longKey = String(repeating: "a", count: 300)
+        await XCTAssertThrowsError(try await resend.emails.send(
+            email: .init(
+                from: .init(email: "hadi@example.com", name: "Hadi"),
+                to: ["hadi@domain.com"],
+                subject: "invalid idempotency key",
+                text: "should fail"
+            ),
+            idempotencyKey: longKey
+        )) { error in
+            XCTAssertEqual(error as? ResendError, ResendError.invalidIdempotencyKey("The idempotency key must be between 1-256 characters. Retry with a valid key or without supplying an idempotency key."))
+        }
+    }
+
+    func testSendBatchWithInvalidIdempotencyKey() async throws {
+        let longKey = String(repeating: "b", count: 300)
+        await XCTAssertThrowsError(try await resend.emails.sendBatch(
+            emails: [
+                .init(
+                    from: .init(email: "hadi@example.com", name: "Hadi"),
+                    to: ["hadi@domain.com"],
+                    subject: "invalid batch idempotency key",
+                    text: "should fail"
+                )
+            ],
+            idempotencyKey: longKey
+        )) { error in
+            XCTAssertEqual(error as? ResendError, ResendError.invalidIdempotencyKey("The idempotency key must be between 1-256 characters. Retry with a valid key or without supplying an idempotency key."))
+        }
     }
 
 }
