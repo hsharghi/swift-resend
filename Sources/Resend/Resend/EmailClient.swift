@@ -86,7 +86,7 @@ public class EmailClient: ResendClient {
             request: .init(
                 url: APIPath.getPath(for: .cancleSchedule(emailId: emailId)),
                 method: .POST,
-                headers: getAuthHeader(),
+                headers: getAuthHeader()
             )
         ).get()
         let canceledEmail = try parseResponse(response, to: EmailSentResponse.self)
