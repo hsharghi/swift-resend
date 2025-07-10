@@ -25,6 +25,19 @@ extension EmailSchedule: ExpressibleByStringLiteral {
 /// Custom Codable implementation to convert `Date` object to proper date format
 /// Date format shoudl be ISO 8601
 extension EmailSchedule: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        // Try to decode as Date first
+        if let date = try? container.decode(Date.self) {
+            self = .date(date)
+        } else if let string = try? container.decode(String.self) {
+            self = .string(string)
+        } else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected Date or String for EmailSchedule")
+        }
+    }
+    
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
