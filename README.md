@@ -9,8 +9,8 @@ Add the dependency to your Package.swift:
 
 ~~~~swift
 dependencies: [
-	...
-	.package(url: "https://github.com/hsharghi/swift-resend.git", from: "1.0.0")
+    ...
+    .package(url: "https://github.com/hsharghi/swift-resend.git", from: "1.0.0")
 ],
 targets: [
     .target(name: "App", dependencies: [
@@ -35,27 +35,30 @@ You can send a single email by creating a `ResendEmail` object and retrieving th
 import Resend
 
 let email = ResendEmail(
-        from: .init(email: "hadi@example.com", name: "Hadi"),
-        to: ["hadi@domain.com"],
-        subject: "running xctest",
-        replyTo: [
-            "hadi@example.com",
-            "manager@example.com"
-        ],
-        text: "sending email via Resend API",
-        headers: [
-            .init(name: "X-Entity-Ref-ID", value: "234H3-44"),
-            .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
-        ],
-        attachments: [
-            .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))),
-                filename: "sales.xlsx")
-        ],
-        tags: [
-            .init(name: "priority", value: "medium"),
-            .init(name: "department", value: "sales")
-        ]
-    )
+                from: EmailAddress(email: "hadi@example.com", name: "Hadi"),
+                to: ["hadi@domain.com"],
+                subject: "Sent via Resend",
+                replyTo: [
+                    "hadi@example.com",
+                    "<Mike>manager@example.com",
+                    EmailAddress(email: "sales@example.com", name: "John")
+                ],
+                text: "sending email using Swift Resend SDK",
+                headers: [
+                    EmailHeaders(name: "X-Entity-Ref-ID", value: "234H3-44"),
+                    EmailHeaders(name: "X-Entity-Dep-ID", value: "SALE-03"),
+                ],
+                attachments: [
+                    EmailAttachment(filePath: "path/to/a/file")
+                ],
+                tags: [
+                    EmailTags(name: "priority", value: "medium"),
+                    EmailTags(name: "department", value: "sales")
+                ]
+        )
+
+let id = try await resendClient.emails.send(email)
+
 ~~~~
 #### `ResendEmail` supports both `text` and `html` content.
 
@@ -66,21 +69,15 @@ let email = ResendEmail(
         to: ["hadi@domain.com"],
         subject: "sending scheduled email",
         scheduledAt: "in an hour",
-        text: "sending email via Resend API",
+        text: "sending email via Swift Resend SDK",
     )
 
 let email = ResendEmail(
         to: ["hadi@domain.com"],
         subject: "sending scheduled email",
         scheduledAt: .date(Date(timeIntervalSinceNow: 60\*60)),
-        text: "sending email via Resend API",
+        text: "sending email via Swift Resend SDK",
     )
-~~~~
-
-Now the email can be sent using resend client
-
-~~~~swift
-let id = try await resendClient.emails.send(email)
 ~~~~
 
 Scheduled emails can be updated to new schedule or be canceled.

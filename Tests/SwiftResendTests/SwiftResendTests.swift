@@ -18,7 +18,7 @@ final class SwiftResendTests: XCTestCase {
     override func tearDown() async throws {
         try await httpClient.shutdown()
     }
-
+    
     
     func testEmailAddressFromString() {
         let email1: EmailAddress = "hadi<hadi123@example.com>"
@@ -27,25 +27,27 @@ final class SwiftResendTests: XCTestCase {
     }
     
     func testSend() async throws {
-        let id = try await resend.emails.send(email: .init(
-            from: .init(email: "hadi@example.com", name: "Hadi"),
+        let id = try await resend.emails.send(email: ResendEmail(
+            from: EmailAddress(email: "hadi@example.com", name: "Hadi"),
             to: ["hadi@domain.com"],
             subject: "running xctest",
             replyTo: [
                 "hadi@example.com",
-                "manager@example.com"
+                "manager@example.com",
+                EmailAddress(email: "sales@example.com", name: "John")
             ],
             text: "sending email from XCTest suit",
             headers: [
-                .init(name: "X-Entity-Ref-ID", value: "234H3-44"),
-                .init(name: "X-Entity-Dep-ID", value: "SALE-03"),
+                EmailHeaders(name: "X-Entity-Ref-ID", value: "234H3-44"),
+                EmailHeaders(name: "X-Entity-Dep-ID", value: "SALE-03"),
             ],
             attachments: [
-                .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx")
+                EmailAttachment(filePath: "path/to/a/file"),
+                EmailAttachment(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx")
             ],
             tags: [
-                .init(name: "priority", value: "medium"),
-                .init(name: "department", value: "sales")
+                EmailTags(name: "priority", value: "medium"),
+                EmailTags(name: "department", value: "sales")
             ]
         ))
         XCTAssertNotNil(id)
@@ -116,18 +118,18 @@ final class SwiftResendTests: XCTestCase {
     
     func testSendBatch() async throws {
         let response = try await resend.emails.sendBatch(emails: [
-        .init(
-            from: .init(email: "hadi@example.com", name: "Hadi"),
-            to: ["hadi@domain.com"],
-            subject: "running xctest",
-            text: "sending batch email from XCTest suit"
-        ),
-        .init(
-            from: .init(email: "hadi@example.com", name: "Hadi"),
-            to: ["hadi@domain.com"],
-            subject: "running xctest 2",
-            text: "sending batch email from XCTest suit"
-        )
+            .init(
+                from: .init(email: "hadi@example.com", name: "Hadi"),
+                to: ["hadi@domain.com"],
+                subject: "running xctest",
+                text: "sending batch email from XCTest suit"
+            ),
+            .init(
+                from: .init(email: "hadi@example.com", name: "Hadi"),
+                to: ["hadi@domain.com"],
+                subject: "running xctest 2",
+                text: "sending batch email from XCTest suit"
+            )
         ])
         XCTAssertEqual(response.count, 2)
     }
@@ -272,7 +274,7 @@ final class SwiftResendTests: XCTestCase {
     
     func testDeleteContactWithEmail() async throws {
         let audience = try await resend.audiences.create(name: "test-audience")
-        _ = try await resend.contacts.create(audienceId: audience.id, 
+        _ = try await resend.contacts.create(audienceId: audience.id,
                                              email: "hadi@example.com",
                                              firstName: "Hadi")
 
@@ -289,16 +291,16 @@ final class SwiftResendTests: XCTestCase {
         
         // prevent API rate limit error
         try await Task.sleep(for: .seconds(1))
-
+        
         _ = try await resend.contacts.create(audienceId: audience.id,
-                                                          email: "hadi@example.com",
-                                                          firstName: "Hadi",
-                                                          subscriptionStatus: true)
+                                             email: "hadi@example.com",
+                                             firstName: "Hadi",
+                                             subscriptionStatus: true)
         _ = try await resend.contacts.create(audienceId: audience.id,
-                                                          email: "john@example.com",
-                                                          firstName: "John",
-                                                          lastName: "Appleseed",
-                                                          subscriptionStatus: false)
+                                             email: "john@example.com",
+                                             firstName: "John",
+                                             lastName: "Appleseed",
+                                             subscriptionStatus: false)
         
         // prevent API rate limit error
         try await Task.sleep(for: .seconds(1))
@@ -347,8 +349,8 @@ final class SwiftResendTests: XCTestCase {
         
         try await resend.apiKeys.delete(apiKeyId: key.id)
     }
-     
-    // MARK: Domain Tests   
+    
+    // MARK: Domain Tests
     func testCreateDomain() async throws {
         let response = try await resend.domains.create(name: "example.com")
         XCTAssertNotNil(response.id)
@@ -376,7 +378,7 @@ final class SwiftResendTests: XCTestCase {
     }
     
     func testDeleteDomain() async throws {
-        try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
+        _ = try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
     }
 
     // MARK: Broadcast Tests
@@ -538,6 +540,7 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(broadcastWithNull.audienceId, "audience-id-3")
         XCTAssertEqual(broadcastWithNull.status, "sent")
         XCTAssertNil(broadcastWithNull.scheduledAt)
+    }
 
     func testSendWithIdempotencyKey() async throws {
         let id = try await resend.emails.send(
