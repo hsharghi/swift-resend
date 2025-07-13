@@ -30,6 +30,7 @@ public enum ResendError: Error {
     case invalidIdempotencyKey(String)
     case invalidIdempotentRequest(String)
     case concurrentIdempotentRequests(String)
+    case attachmentTooLarge(UInt64)
     case unknownError
     
     
@@ -72,6 +73,8 @@ public enum ResendError: Error {
             return "invalid_idempotent_request"
         case .concurrentIdempotentRequests:
             return "concurrent_idempotent_requests"
+        case .attachmentTooLarge:
+            return "attachment_too_large"
         case .unknownError:
             return "unknown_error"
         }
@@ -99,6 +102,8 @@ public enum ResendError: Error {
                 .invalidIdempotentRequest(let message),
                 .concurrentIdempotentRequests(let message):
             return message
+        case .attachmentTooLarge(let fileSize):
+            return "The attachment is too large (\(fileSize/1_000_000)MB)). Max attachment size is 40MB."
         case .unknownError:
             return "Unknown error"
         }
@@ -143,6 +148,8 @@ public enum ResendError: Error {
             return "This idempotency key has already been used on a request with a different payload. Retry with a different key or payload."
         case .concurrentIdempotentRequests:
             return "Another request with the same idempotency key is currently in progress. Retry this request later."
+        case .attachmentTooLarge:
+            return "The attachment is too large. Max size is 40MB. Reduce the size of the attachment and try again."
         case .unknownError:
             return ""
         }
