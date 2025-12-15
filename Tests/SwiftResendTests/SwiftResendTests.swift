@@ -62,7 +62,7 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertNotNil(id)
         
         let info = try await resend.emails.get(emailId: id)
-        XCTAssertEqual("scheduled", info.lastEvent)
+        XCTAssertEqual(.scheduled, info.lastEvent)
     }
     
     func testSendWithScheduleWithDate() async throws {
@@ -76,7 +76,7 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertNotNil(id)
         
         let info = try await resend.emails.get(emailId: id)
-        XCTAssertEqual("scheduled", info.lastEvent)
+        XCTAssertEqual(.scheduled, info.lastEvent)
     }
     
     
@@ -93,7 +93,7 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(id, id2)
         
         let info = try await resend.emails.get(emailId: id)
-        XCTAssertEqual("scheduled", info.lastEvent)
+        XCTAssertEqual(.scheduled, info.lastEvent)
 
     }
     
@@ -110,7 +110,7 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(id, id2)
         
         let info = try await resend.emails.get(emailId: id)
-        XCTAssertEqual("canceled", info.lastEvent)
+        XCTAssertEqual(.canceled, info.lastEvent)
 
     }
     
