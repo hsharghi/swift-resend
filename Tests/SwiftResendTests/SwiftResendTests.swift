@@ -158,6 +158,25 @@ final class SwiftResendTests: XCTestCase {
         
     }
     
+    func testGetSentEmailList() async throws {
+        let list = try await resend.emails.list(limit: 1)
+        XCTAssertGreaterThan(list.data.count, 0)
+        
+        // we can test `before` and `after` parameters if list has more than 1 item.
+        if list.hasMore {
+            let email = list.data.first!
+            let nextList = try await resend.emails.list(limit: 1, after: email.id)
+            let nextEmail = nextList.data.first!
+            XCTAssertNotEqual(email.id, nextEmail.id)
+            
+            // prevent API rate limit error
+            try await Task.sleep(for: .seconds(1))
+            
+            let prevList = try await resend.emails.list(limit: 1, before: nextEmail.id)
+            let prevEmail = prevList.data.first!
+            XCTAssertEqual(prevEmail.id, email.id)
+        }
+    }
     
     // Mark: Audience Tests
     func testCreateAudience() async throws {
