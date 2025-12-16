@@ -7,19 +7,17 @@
 
 import Foundation
 
-public struct EmailGetResponse {
-    
+public struct EmailListItem {
+
     public var id: String
     public var to: [EmailAddress]
     public var from: EmailAddress
     public var createdAt: Date
     public var subject: String
-    public var html: String?
-    public var text: String?
     public var bcc: [EmailAddress]?
     public var cc: [EmailAddress]?
     public var replyTo: [EmailAddress]?
-    public var lastEvent: EmailEvents
+    public var scheduledAt: EmailSchedule?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -27,18 +25,28 @@ public struct EmailGetResponse {
         case from
         case createdAt = "created_at"
         case subject
-        case html
-        case text
         case bcc
         case cc
         case replyTo = "reply_to"
-        case lastEvent = "last_event"
+        case scheduledAt = "scheduled_at"
+    }
+    
+}
+
+public struct EmailListResponse: Decodable {
+
+    public var hasMore: Bool
+    public var data: [EmailListItem]
+
+    enum CodingKeys: String, CodingKey {
+        case hasMore = "has_more"
+        case data
     }
     
 }
 
 
-extension EmailGetResponse: Decodable {
+extension EmailListItem: Decodable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -57,8 +65,6 @@ extension EmailGetResponse: Decodable {
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         
         subject = try container.decode(String.self, forKey: .subject)
-        html = try container.decode(String?.self, forKey: .html)
-        text = try container.decode(String?.self, forKey: .text)
         
         if let bccStrings = try container.decode([String]?.self, forKey: .bcc) {
             let bccAddresses = bccStrings.map { EmailAddress(from: $0)}
@@ -75,8 +81,11 @@ extension EmailGetResponse: Decodable {
             replyTo = replyToAddresses
         }
         
-        lastEvent = try container.decode(EmailEvents.self, forKey: .lastEvent)
+        if let scheduledAtString = try container.decode(String?.self, forKey: .scheduledAt) {
+            scheduledAt = EmailSchedule(stringLiteral: scheduledAtString)
+        }
 
+        print(scheduledAt.debugDescription)
         
     }
 }
