@@ -19,7 +19,7 @@ public struct EmailGetResponse {
     public var bcc: [EmailAddress]?
     public var cc: [EmailAddress]?
     public var replyTo: [EmailAddress]?
-    public var lastEvent: String
+    public var lastEvent: EmailEvents
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -75,7 +75,7 @@ extension EmailGetResponse: Decodable {
             replyTo = replyToAddresses
         }
         
-        lastEvent = try container.decode(String.self, forKey: .lastEvent)
+        lastEvent = try container.decode(EmailEvents.self, forKey: .lastEvent)
 
         
     }

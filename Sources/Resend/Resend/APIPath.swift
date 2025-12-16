@@ -16,7 +16,14 @@ enum APIPath {
     case emailSend
     case emailBatchSend
     case emailGet(emailId: String)
+    case emailList(limit: Int, after: String?, before: String?)
+    case attachmentList(emailId: String, limit: Int, after: String?, before: String?)
+    case attachmentGet(attachmentId: String, emailId: String)
     case cancleSchedule(emailId: String)
+    case emailReceivingList(limit: Int, after: String?, before: String?)
+    case emailReceivingGet(emailId: String)
+    case emailReceivingAttachmentList(emailId: String, limit: Int, after: String?, before: String?)
+    case emailReceivingAttachmentGet(attachmentId: String, emailId: String)
     case audienceCreate
     case audienceGet(audienceId: String)
     case audienceDelete(audienceId: String)
@@ -54,8 +61,50 @@ enum APIPath {
             return path(of: "/emails/batch")
         case .emailGet(let emailId):
             return path(of: "/emails/\(emailId)")
+        case .emailList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/emails?limit=\(limit)")
+            if let after {
+                path += "&after=\(after)"
+            }
+            if let before {
+                path += "&before=\(before)"
+            }
+            return path
+        case .attachmentList(emailId: let emailId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/emails/\(emailId)/attachments?limit=\(limit)")
+            if let after {
+                path += "&after=\(after)"
+            }
+            if let before {
+                path += "&before=\(before)"
+            }
+            return path
+        case .attachmentGet(attachmentId: let attachmentId, emailId: let emailId):
+            return path(of: "/emails/\(emailId)/attachments/\(attachmentId)")
         case .cancleSchedule(let emailId):
             return path(of: "/emails/\(emailId)/cancel")
+        case .emailReceivingList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/emails/receiving?limit=\(limit)")
+            if let after {
+                path += "&after=\(after)"
+            }
+            if let before {
+                path += "&before=\(before)"
+            }
+            return path
+        case .emailReceivingGet(let emailId):
+            return path(of: "/emails/receiving/\(emailId)")
+        case .emailReceivingAttachmentList(emailId: let emailId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/emails/receiving/\(emailId)/attachments?limit=\(limit)")
+            if let after {
+                path += "&after=\(after)"
+            }
+            if let before {
+                path += "&before=\(before)"
+            }
+            return path
+        case .emailReceivingAttachmentGet(attachmentId: let attachmentId, emailId: let emailId):
+            return path(of: "/emails/receiving/\(emailId)/attachments/\(attachmentId)")
         case .audienceCreate:
             return path(of: "/audiences")
         case .audienceGet(let audienceId):

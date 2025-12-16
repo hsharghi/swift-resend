@@ -61,6 +61,32 @@ public class EmailClient: ResendClient {
         
     }
     
+    /// Retrieve a list of emails sent by your team.
+    /// The list returns references to individual emails.
+    /// If needed, you can use the id of an email to retrieve the email HTML to plain text using the Retrieve Email endpoint
+    /// Or the Retrieve Attachments endpoint to get an email’s attachments.
+    /// The `limit` parameter is optional. If you do not provide a limit, all attachments will be returned in a single response.
+    /// `before` and `after` parameters can not be used together
+    public func list(limit: Int = 20, after: String? = nil, before: String? = nil) async throws -> EmailListResponse {
+        var limitParam = limit
+        limitParam = min(100, max(1, limitParam))
+        
+        // `before` parameter can not be used with `after` parameter.
+        var beforeParam = before
+        if after != nil {
+            beforeParam = nil
+        }
+        let response = try await httpClient.execute(
+            request: .init(
+                url: APIPath.getPath(for: .emailList(limit: limitParam, after: after, before: beforeParam)),
+                method: .GET,
+                headers: getAuthHeader()
+            )
+        ).get()
+        return try parseResponse(response, to: EmailListResponse.self)
+
+    }
+    
     /// Update schedule date
     /// scheduledAt parameter can be in natural language (e.g.: in 1 min) or `Date` object
     /// Id of the email will be returned on successful update
@@ -92,4 +118,12 @@ public class EmailClient: ResendClient {
         let canceledEmail = try parseResponse(response, to: EmailSentResponse.self)
         return canceledEmail.id
     }
+    
+    public lazy var attachments: Attachments = {
+        Attachments(client: self)
+    }()
+    
+    public lazy var receiving: Receiving = {
+        Receiving(client: self)
+    }()
 }
