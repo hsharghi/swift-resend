@@ -69,6 +69,7 @@ public class EmailClient: ResendClient {
     /// The list returns references to individual emails.
     /// If needed, you can use the id of an email to retrieve the email HTML to plain text using the Retrieve Email endpoint
     /// Or the Retrieve Attachments endpoint to get an email’s attachments.
+    /// The `limit` parameter is optional. If you do not provide a limit, all attachments will be returned in a single response.
     /// `before` and `after` parameters can not be used together
     public func list(limit: Int = 20, after: String? = nil, before: String? = nil) async throws -> EmailListResponse {
         var limitParam = limit
@@ -120,5 +121,56 @@ public class EmailClient: ResendClient {
         ).get()
         let canceledEmail = try parseResponse(response, to: EmailSentResponse.self)
         return canceledEmail.id
+    }
+    
+    public lazy var attachments: Attachments = {
+        Attachments(client: self)
+    }()
+}
+
+extension EmailClient {
+    public class Attachments {
+        
+        private var client: EmailClient
+        
+        internal init(client: EmailClient) {
+            self.client = client
+        }
+        
+        /// Retrieve a list of attachments from a sent email.
+        /// The `limit` parameter is optional. If you do not provide a limit, all attachments will be returned in a single response.
+        /// `before` and `after` parameters can not be used together
+        public func list(emailId: String, limit: Int = 20, after: String? = nil, before: String? = nil) async throws -> EmailAttachmentResponse {
+            var limitParam = limit
+            limitParam = min(100, max(1, limitParam))
+            
+            // `before` parameter can not be used with `after` parameter.
+            var beforeParam = before
+            if after != nil {
+                beforeParam = nil
+            }
+            let response = try await client.httpClient.execute(
+                request: .init(
+                    url: APIPath.getPath(for: .attachmentList(emailId: emailId, limit: limitParam, after: after, before: beforeParam)),
+                    method: .GET,
+                    headers: client.getAuthHeader()
+                )
+            ).get()
+            return try client.parseResponse(response, to: EmailAttachmentResponse.self)
+
+        }
+
+        /// Retrieve a single attachment from a sent email.
+        public func get(attachmentId: String, emailId: String) async throws -> EmailAttachmentItem {
+            let response = try await client.httpClient.execute(
+                request: .init(
+                    url: APIPath.getPath(for: .attachmentGet(attachmentId: attachmentId, emailId: emailId)),
+                    method: .GET,
+                    headers: client.getAuthHeader()
+                )
+            ).get()
+            return try client.parseResponse(response, to: EmailAttachmentItem.self)
+
+        }
     }
 }

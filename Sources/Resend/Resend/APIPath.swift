@@ -17,6 +17,8 @@ enum APIPath {
     case emailBatchSend
     case emailGet(emailId: String)
     case emailList(limit: Int, after: String?, before: String?)
+    case attachmentList(emailId: String, limit: Int, after: String?, before: String?)
+    case attachmentGet(attachmentId: String, emailId: String)
     case cancleSchedule(emailId: String)
     case audienceCreate
     case audienceGet(audienceId: String)
@@ -58,6 +60,17 @@ enum APIPath {
                 path += "&before=\(before)"
             }
             return path
+        case .attachmentList(emailId: let emailId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/emails/\(emailId)/attachments?limit=\(limit)")
+            if let after {
+                path += "&after=\(after)"
+            }
+            if let before {
+                path += "&before=\(before)"
+            }
+            return path
+        case .attachmentGet(attachmentId: let attachmentId, emailId: let emailId):
+            return path(of: "/emails/\(emailId)/attachments/\(attachmentId)")
         case .cancleSchedule(let emailId):
             return path(of: "/emails/\(emailId)/cancel")
         case .audienceCreate:
