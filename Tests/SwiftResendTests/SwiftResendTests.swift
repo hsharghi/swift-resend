@@ -235,6 +235,114 @@ final class SwiftResendTests: XCTestCase {
 
     }
     
+    // Mark: Receiving email tests
+    
+    func testGetReceivedEmailList() async throws {
+        
+        _ = try await resend.emails.sendBatch(emails: [
+        .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "running xctest",
+            text: "sending batch email from XCTest suit"
+        ),
+        .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "running xctest 2",
+            text: "sending batch email from XCTest suit"
+        )
+        ])
+        let list = try await resend.emails.receiving.list()
+        
+        XCTAssertGreaterThan(list.data.count, 0)
+        
+    }
+    
+    func testGetReceivedEmailInfo() async throws {
+        _ = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "running xctest",
+            text: "sending batch email from XCTest suit",
+            attachments: [
+                .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx"),
+            ],
+        ))
+        
+        // wait for email to deliver
+        print("waiting for 5 seconds for the email to be delivered...")
+        try await Task.sleep(for: .seconds(5))
+
+        let list = try await resend.emails.receiving.list()
+        let email = list.data.first!
+        
+        XCTAssertEqual(email.subject, "running xctest")
+        XCTAssertEqual(email.text, "sending email from XCTest suit")
+        XCTAssertEqual(email.attachments.count, 1)
+
+    }
+    
+    func testGetReceivedEmailAttachmentList() async throws {
+        _ = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "running xctest",
+            text: "sending batch email from XCTest suit",
+            attachments: [
+                .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx"),
+                .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/another/file"))), filename: "report.pdf"),
+            ],
+        ))
+        
+        
+        // wait for email to deliver
+        print("waiting for 5 seconds for the email to be delivered...")
+        try await Task.sleep(for: .seconds(5))
+
+        let list = try await resend.emails.receiving.list()
+        let email = list.data.first!
+        XCTAssertEqual(email.attachments.count, 2)
+
+        let attachmentList = try await resend.emails.receiving.attachments.list(emailId: email.id)
+        XCTAssertEqual(attachmentList.data.count, 2)
+
+    }
+    
+    
+    func testGetReceivedEmailAttachmentInfo() async throws {
+        _ = try await resend.emails.send(email: .init(
+            from: .init(email: "hadi@example.com", name: "Hadi"),
+            to: ["hadi@domain.com"],
+            subject: "running xctest",
+            text: "sending batch email from XCTest suit",
+            attachments: [
+                .init(content: .init(data: .init(contentsOf: .init(filePath: "path/to/a/file"))), filename: "sales.xlsx"),
+            ],
+        ))
+        
+        
+        // wait for email to deliver
+        print("waiting for 5 seconds for the email to be delivered...")
+        try await Task.sleep(for: .seconds(5))
+
+        let list = try await resend.emails.receiving.list()
+        let email = list.data.first!
+        
+        let attachmentList = try await resend.emails.receiving.attachments.list(emailId: email.id)
+
+        // wait for API rate limit
+        print("waiting for 1 seconds for API rate limit...")
+        try await Task.sleep(for: .seconds(1))
+
+        let firstAttachment = attachmentList.data.first!
+        let attachmentInfo = try await resend.emails.receiving.attachments.get(attachmentId: firstAttachment.id, emailId: email.id)
+        
+        XCTAssertEqual(attachmentInfo.filename, "sales.xlsx")
+        XCTAssertGreaterThan(attachmentInfo.size, 0)
+
+    }
+    
     
     // Mark: Audience Tests
     func testCreateAudience() async throws {
