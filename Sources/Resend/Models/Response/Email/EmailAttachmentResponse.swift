@@ -52,22 +52,23 @@ extension EmailAttachmentItem: Decodable {
         size = try container.decode(UInt64.self, forKey: .size)
         contentType = try container.decode(String.self, forKey: .contentType)
         contentDisposition = try container.decode(String.self, forKey: .contentDisposition)
-        if container.contains(.contentId) {
-            contentId = try container.decode(String.self, forKey: .contentId)
-        } else {
-            contentId = ""
+        contentId = ""
+        if let decodedContentId = try container.decodeIfPresent(String.self, forKey: .contentId) {
+            contentId = decodedContentId
         }
         downloadUrl = try container.decode(String.self, forKey: .downloadUrl)
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-        
-        let dateString = try container.decode(String.self, forKey: .expiresAt)
-        guard let date = dateFormatter.date(from: dateString) else {
-            throw DecodingError.dataCorruptedError(forKey: .expiresAt,
-                                                   in: container,
-                                                   debugDescription: "Date string does not match format")
+        if let dateString = try? container.decode(String.self, forKey: .expiresAt) {
+             if let date = DateFormatter.resendReceivedEmailDateFormatter.date(from: dateString) {
+                 expiresAt = date
+             } else if let date = DateFormatter.iso8601Full.date(from: dateString) {
+                 expiresAt = date
+             } else {
+                 throw DecodingError.dataCorruptedError(forKey: .expiresAt, in: container, debugDescription: "Date string does not match expected formats")
+             }
+        } else {
+            expiresAt = try container.decode(Date.self, forKey: .expiresAt)
         }
-        expiresAt = date
+
     }
 }

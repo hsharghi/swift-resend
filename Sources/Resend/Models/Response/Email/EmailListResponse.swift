@@ -84,8 +84,6 @@ extension EmailListItem: Decodable {
         if let scheduledAtString = try container.decode(String?.self, forKey: .scheduledAt) {
             scheduledAt = EmailSchedule(stringLiteral: scheduledAtString)
         }
-
-        print(scheduledAt.debugDescription)
         
     }
 }
