@@ -108,7 +108,8 @@ You can retrieve list of emails sent by your team.
 ~~~~swift
 let sentMails = try await resendClient.emails.list(limit: 10, before: lastEmailId)
 ~~~~
-Look up [Resend API reference](https://resend.com/docs/api-reference/emails/list-emails) for using `limit`, `before` or `after` parameters.
+>[!NOTE]
+>Look up [Resend API reference](https://resend.com/docs/api-reference/emails/list-emails) for using `limit`, `before` or `after` parameters.
 
 
 ### Retrieving Email Information
@@ -136,7 +137,8 @@ let attachment = try await resendClient.emails.attachments.get(attachmentId: att
 `attachmentId` can be retreived from attachment list
 
 ### Receiving
-For setting up receiving email address, refer to [Receiving Emails](https://resend.com/docs/dashboard/receiving/introduction) section of Resend documentation.
+> [!IMPORTANT]
+> For setting up receiving email address, refer to [Receiving Emails](https://resend.com/docs/dashboard/receiving/introduction) section of Resend documentation.
 
 
 
@@ -146,7 +148,8 @@ Retrieve a list of received emails for the authenticated user.
 ~~~~swift
 let receivedEmails = try await resendClient.emails.receiving(limit: 10, before: lastEmailId)
 ~~~~
-Look up [Resend API reference](https://resend.com/docs/api-reference/emails/list-received-emails) for using `limit`, `before` or `after` parameters.
+>[!NOTE]
+>Look up [Resend API reference](https://resend.com/docs/api-reference/emails/list-received-emails) for using `limit`, `before` or `after` parameters.
 
 
 
