@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Hadi Sharghi on 6/2/24.
 //
@@ -23,8 +23,8 @@ public class ResendClient {
     
     let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
-         encoder.dateEncodingStrategy = .secondsSince1970
-         return encoder
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
     }()
     
     let decoder: JSONDecoder = {

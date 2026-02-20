@@ -471,77 +471,86 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(deleteResponse.id, createResponse.id)
     }
     
-    // MARK: EmailSchedule Decoding Tests
+    // MARK: - EmailSchedule Decoding Tests
+
     func testEmailScheduleDecodingInBroadcastSummary() throws {
-        // Test decoding with Date
+
+        // Use a decoder configured exactly like ResendClient.decoder so this
+        // test would have caught issue #9 (BroadcastSummary using the wrong
+        // date format) instead of hiding it behind a local .iso8601 decoder.
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+
+        // --- scheduledAt as an ISO 8601 date string ---
         let dateJSON = """
         {
             "id": "test-id",
             "audience_id": "audience-id",
             "status": "draft",
-            "created_at": "2024-01-01T00:00:00Z",
-            "scheduled_at": "2024-01-02T00:00:00Z",
-            "sent_at": "2024-01-03T00:00:00Z"
+            "created_at": "2024-01-01T00:00:00.000000Z",
+            "scheduled_at": "2024-01-02T00:00:00.000000Z",
+            "sent_at": "2024-01-03T00:00:00.000000Z"
         }
         """.data(using: .utf8)!
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
+
         let broadcastWithDate = try decoder.decode(BroadcastSummary.self, from: dateJSON)
         XCTAssertEqual(broadcastWithDate.id, "test-id")
         XCTAssertEqual(broadcastWithDate.audienceId, "audience-id")
         XCTAssertEqual(broadcastWithDate.status, "draft")
-        
+
         if case .date(let date) = broadcastWithDate.scheduledAt {
-            let expectedDate = ISO8601DateFormatter().date(from: "2024-01-02T00:00:00Z")!
+            let isoFormatter = DateFormatter()
+            isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ"
+            let expectedDate = isoFormatter.date(from: "2024-01-02T00:00:00.000000Z")!
             XCTAssertEqual(date, expectedDate)
         } else {
             XCTFail("Expected scheduledAt to be .date case")
         }
-        
-        // Test decoding with String
+
+        // --- scheduledAt as a natural-language string ---
         let stringJSON = """
         {
             "id": "test-id-2",
             "audience_id": "audience-id-2",
             "status": "scheduled",
-            "created_at": "2024-01-01T00:00:00Z",
+            "created_at": "2024-01-01T00:00:00.000000Z",
             "scheduled_at": "in 2 hours",
             "sent_at": null
         }
         """.data(using: .utf8)!
-        
+
         let broadcastWithString = try decoder.decode(BroadcastSummary.self, from: stringJSON)
         XCTAssertEqual(broadcastWithString.id, "test-id-2")
         XCTAssertEqual(broadcastWithString.audienceId, "audience-id-2")
         XCTAssertEqual(broadcastWithString.status, "scheduled")
-        
+
         if case .string(let scheduleString) = broadcastWithString.scheduledAt {
             XCTAssertEqual(scheduleString, "in 2 hours")
         } else {
             XCTFail("Expected scheduledAt to be .string case")
         }
-        
-        // Test decoding with null scheduledAt
+
+        // --- scheduledAt absent (null) ---
         let nullJSON = """
         {
             "id": "test-id-3",
             "audience_id": "audience-id-3",
             "status": "sent",
-            "created_at": "2024-01-01T00:00:00Z",
+            "created_at": "2024-01-01T00:00:00.000000Z",
             "scheduled_at": null,
-            "sent_at": "2024-01-03T00:00:00Z"
+            "sent_at": "2024-01-03T00:00:00.000000Z"
         }
         """.data(using: .utf8)!
-        
+
         let broadcastWithNull = try decoder.decode(BroadcastSummary.self, from: nullJSON)
         XCTAssertEqual(broadcastWithNull.id, "test-id-3")
         XCTAssertEqual(broadcastWithNull.audienceId, "audience-id-3")
         XCTAssertEqual(broadcastWithNull.status, "sent")
         XCTAssertNil(broadcastWithNull.scheduledAt)
     }
-
+    
     func testSendWithIdempotencyKey() async throws {
         let id = try await resend.emails.send(
             email: .init(
