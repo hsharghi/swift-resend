@@ -54,9 +54,9 @@ public class ResendClient {
         return headers
     }
     
-    public var emails: EmailClient {
+    public lazy var emails: EmailClient = {
         EmailClient(httpClient: httpClient, apiKey: apiKey)
-    }    
+    }()
     
     public var audiences: AudienceClient {
         AudienceClient(httpClient: httpClient, apiKey: apiKey)
