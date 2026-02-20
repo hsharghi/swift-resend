@@ -16,7 +16,7 @@ enum APIPath {
     case emailSend
     case emailBatchSend
     case emailGet(emailId: String)
-    case cancleSchedule(emailId: String)
+    case cancelSchedule(emailId: String)
     case audienceCreate
     case audienceGet(audienceId: String)
     case audienceDelete(audienceId: String)
@@ -54,7 +54,7 @@ enum APIPath {
             return path(of: "/emails/batch")
         case .emailGet(let emailId):
             return path(of: "/emails/\(emailId)")
-        case .cancleSchedule(let emailId):
+        case .cancelSchedule(let emailId):
             return path(of: "/emails/\(emailId)/cancel")
         case .audienceCreate:
             return path(of: "/audiences")

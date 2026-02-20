@@ -84,7 +84,7 @@ public class EmailClient: ResendClient {
     public func cancel(emailId: String) async throws -> String {
         let response = try await httpClient.execute(
             request: .init(
-                url: APIPath.getPath(for: .cancleSchedule(emailId: emailId)),
+                url: APIPath.getPath(for: .cancelSchedule(emailId: emailId)),
                 method: .POST,
                 headers: getAuthHeader()
             )
