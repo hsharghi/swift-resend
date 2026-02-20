@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Resend+ContactParseResponse.swift
 //
 //
 //  Created by Hadi Sharghi on 6/9/24.
@@ -19,13 +19,12 @@ extension ContactClient {
                 let list = try decodeResponse(ContactListResponse.self, from: byteBuffer)
                 return list.data
             } catch {
-                throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: AudienceListResponse.self))")
+                throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: ContactListResponse.self))")
             }
         } else {
             let errorResponse = try decodeResponse(ErrorResponse.self, from: byteBuffer)
             try parseErrorResponse(errorResponse)
         }
-
     }
     
 }

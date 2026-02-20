@@ -58,25 +58,25 @@ public class ResendClient {
         EmailClient(httpClient: httpClient, apiKey: apiKey)
     }()
     
-    public var audiences: AudienceClient {
+    public lazy var audiences: AudienceClient = {
         AudienceClient(httpClient: httpClient, apiKey: apiKey)
-    }
+    }()
     
-    public var contacts: ContactClient {
+    public lazy var contacts: ContactClient = {
         ContactClient(httpClient: httpClient, apiKey: apiKey)
-    }    
+    }()
     
-    public var apiKeys: APIKeyClient {
+    public lazy var apiKeys: APIKeyClient = {
         APIKeyClient(httpClient: httpClient, apiKey: apiKey)
-    }
+    }()
   
-    public var domains: DomainClient {
+    public lazy var domains: DomainClient = {
         DomainClient(httpClient: httpClient, apiKey: apiKey)
-    }
+    }()
     
-    public var broadcasts: BroadcastClient {
+    public lazy var broadcasts: BroadcastClient = {
         BroadcastClient(httpClient: httpClient, apiKey: apiKey)
-    }
+    }()
     
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
