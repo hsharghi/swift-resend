@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  EmailGetResponse.swift
 //
 //
 //  Created by Hadi Sharghi on 6/9/24.
@@ -46,14 +46,11 @@ extension EmailGetResponse: Decodable {
         id = try container.decode(String.self, forKey: .id)
         
         let toStrings = try container.decode([String].self, forKey: .to)
-        let toAddresses = toStrings.map { EmailAddress(from: $0)}
-        to = toAddresses
+        to = toStrings.map { EmailAddress(from: $0) }
         
         let fromString = try container.decode(String.self, forKey: .from)
         from = EmailAddress(from: fromString)
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         
         subject = try container.decode(String.self, forKey: .subject)
@@ -61,22 +58,17 @@ extension EmailGetResponse: Decodable {
         text = try container.decode(String?.self, forKey: .text)
         
         if let bccStrings = try container.decode([String]?.self, forKey: .bcc) {
-            let bccAddresses = bccStrings.map { EmailAddress(from: $0)}
-            bcc = bccAddresses
+            bcc = bccStrings.map { EmailAddress(from: $0) }
         }
         
         if let ccStrings = try container.decode([String]?.self, forKey: .cc) {
-            let ccAddresses = ccStrings.map { EmailAddress(from: $0)}
-            cc = ccAddresses
+            cc = ccStrings.map { EmailAddress(from: $0) }
         }
         
-        if let replyToString = try container.decode([String]?.self, forKey: .replyTo) {
-            let replyToAddresses = replyToString.map { EmailAddress(from: $0)}
-            replyTo = replyToAddresses
+        if let replyToStrings = try container.decode([String]?.self, forKey: .replyTo) {
+            replyTo = replyToStrings.map { EmailAddress(from: $0) }
         }
         
         lastEvent = try container.decode(EmailEvents.self, forKey: .lastEvent)
-
-        
     }
 }

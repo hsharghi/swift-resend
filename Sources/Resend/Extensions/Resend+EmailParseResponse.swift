@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Resend+EmailParseResponse.swift
 //
 //
 //  Created by Hadi Sharghi on 6/9/24.
@@ -19,7 +19,7 @@ extension EmailClient {
                 let res = try decodeResponse(EmailSentBatchResponse.self, from: byteBuffer)
                 return res.data.map { $0.id }
             } catch {
-                throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: AudienceListResponse.self))")
+                throw ResendError.decodingError("Failed to decode\n \(String(buffer: byteBuffer)) to \(String(describing: EmailSentBatchResponse.self))")
             }
         } else {
             let errorResponse = try decodeResponse(ErrorResponse.self, from: byteBuffer)
