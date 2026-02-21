@@ -74,6 +74,19 @@ public class BroadcastClient: ResendClient {
         return try parseResponse(response, to: BroadcastCreateResponse.self)
     }
 
+    public func send(broadcastId: String, scheduledAt: EmailSchedule) async throws -> BroadcastCreateResponse {
+        let sendRequest = BroadcastSend(scheduledAt: scheduledAt)
+        let response = try await httpClient.execute(
+            request: .init(
+                url: APIPath.getPath(for: .broadcastSend(broadcastId: broadcastId)),
+                method: .POST,
+                headers: getAuthHeader(),
+                body: .data(encoder.encode(sendRequest))
+            )
+        ).get()
+        return try parseResponse(response, to: BroadcastCreateResponse.self)
+    }
+
     /// Delete a broadcast
     public func delete(broadcastId: String) async throws -> BroadcastCreateResponse {
         let response = try await httpClient.execute(
