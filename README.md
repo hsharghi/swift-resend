@@ -215,7 +215,10 @@ catch let error as ResendError {
 - [x] Contacts
 - [x] Domains
 - [x] API Keys
-- [ ] Broadcasts
+- [x] Broadcasts
+- [ ] Webhooks
+- [ ] Templates
+
 
 ## License
 
