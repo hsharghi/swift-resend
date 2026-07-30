@@ -32,7 +32,7 @@ enum APIPath {
     case contactGet(contactId: String, audienceId: String)
     case contactUpdate(contactId: String, audienceId: String)
     case contactDelete(contactIdOrEmail: String, audienceId: String)
-    case contactList(audienceId: String)
+    case contactListAudience(audienceId: String)
     case apiKeyCreate
     case apiKeyList
     case apiKeyDelete(apiKeyId: String)
@@ -48,9 +48,58 @@ enum APIPath {
     case broadcastSend(broadcastId: String)
     case broadcastDelete(broadcastId: String)
     case broadcastList
+    case segmentCreate
+    case segmentList(limit: Int, after: String?, before: String?)
+    case segmentGet(segmentId: String)
+    case segmentDelete(segmentId: String)
+    case topicCreate
+    case topicList(limit: Int, after: String?, before: String?)
+    case topicGet(topicId: String)
+    case topicUpdate(topicId: String)
+    case topicDelete(topicId: String)
+    case contactCreate
+    case contactList(segmentId: String?, limit: Int, after: String?, before: String?)
+    case contactGetGlobal(idOrEmail: String)
+    case contactUpdateGlobal(idOrEmail: String)
+    case contactDeleteGlobal(idOrEmail: String)
+    case contactSegmentsList(contactId: String, limit: Int, after: String?, before: String?)
+    case contactSegmentAdd(contactId: String, segmentId: String)
+    case contactSegmentRemove(contactId: String, segmentId: String)
+    case contactTopicsList(contactId: String, limit: Int, after: String?, before: String?)
+    case contactTopicsUpdate(contactId: String)
+    case eventCreate
+    case eventList(limit: Int, after: String?, before: String?)
+    case eventGet(identifier: String)
+    case eventUpdate(identifier: String)
+    case eventDelete(identifier: String)
+    case eventSend
+    case automationCreate
+    case automationList(status: String?, limit: Int, after: String?, before: String?)
+    case automationGet(automationId: String)
+    case automationUpdate(automationId: String)
+    case automationDelete(automationId: String)
+    case automationStop(automationId: String)
+    case automationRunsList(automationId: String, status: String?, limit: Int, after: String?, before: String?)
+    case automationRunGet(automationId: String, runId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
+    }
+    
+    private static func appendPagination(_ path: inout String, after: String?, before: String?) {
+        if let after {
+            path += "&after=\(after)"
+        }
+        if let before {
+            path += "&before=\(before)"
+        }
+    }
+    
+    /// Encodes path components that may contain `@` (email addresses).
+    private static func encodePathComponent(_ value: String) -> String {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "@")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
     
     static func getPath(for: APIPath) -> String {
@@ -120,8 +169,8 @@ enum APIPath {
         case .contactUpdate(contactId: let contactId, audienceId: let audienceId):
             return path(of: "/audiences/\(audienceId)/contacts/\(contactId)")
         case .contactDelete(contactIdOrEmail: let contactIdOrEmail, audienceId: let audienceId):
-            return path(of: "/audiences/\(audienceId)/contacts/\(contactIdOrEmail)")
-        case .contactList(let audienceId):
+            return path(of: "/audiences/\(audienceId)/contacts/\(encodePathComponent(contactIdOrEmail))")
+        case .contactListAudience(let audienceId):
             return path(of: "/audiences/\(audienceId)/contacts")
         case .apiKeyCreate:
             return path(of: "/api-keys")
@@ -153,6 +202,97 @@ enum APIPath {
             return path(of: "/broadcasts/\(broadcastId)")
         case .broadcastList:
             return path(of: "/broadcasts")
+        case .segmentCreate:
+            return path(of: "/segments")
+        case .segmentList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/segments?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .segmentGet(let segmentId):
+            return path(of: "/segments/\(segmentId)")
+        case .segmentDelete(let segmentId):
+            return path(of: "/segments/\(segmentId)")
+        case .topicCreate:
+            return path(of: "/topics")
+        case .topicList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/topics?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .topicGet(let topicId):
+            return path(of: "/topics/\(topicId)")
+        case .topicUpdate(let topicId):
+            return path(of: "/topics/\(topicId)")
+        case .topicDelete(let topicId):
+            return path(of: "/topics/\(topicId)")
+        case .contactCreate:
+            return path(of: "/contacts")
+        case .contactList(segmentId: let segmentId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/contacts?limit=\(limit)")
+            if let segmentId {
+                path += "&segment_id=\(segmentId)"
+            }
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .contactGetGlobal(let idOrEmail):
+            return path(of: "/contacts/\(encodePathComponent(idOrEmail))")
+        case .contactUpdateGlobal(let idOrEmail):
+            return path(of: "/contacts/\(encodePathComponent(idOrEmail))")
+        case .contactDeleteGlobal(let idOrEmail):
+            return path(of: "/contacts/\(encodePathComponent(idOrEmail))")
+        case .contactSegmentsList(contactId: let contactId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/contacts/\(encodePathComponent(contactId))/segments?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .contactSegmentAdd(contactId: let contactId, segmentId: let segmentId):
+            return path(of: "/contacts/\(encodePathComponent(contactId))/segments/\(segmentId)")
+        case .contactSegmentRemove(contactId: let contactId, segmentId: let segmentId):
+            return path(of: "/contacts/\(encodePathComponent(contactId))/segments/\(segmentId)")
+        case .contactTopicsList(contactId: let contactId, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/contacts/\(encodePathComponent(contactId))/topics?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .contactTopicsUpdate(let contactId):
+            return path(of: "/contacts/\(encodePathComponent(contactId))/topics")
+        case .eventCreate:
+            return path(of: "/events")
+        case .eventList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/events?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .eventGet(let identifier):
+            return path(of: "/events/\(encodePathComponent(identifier))")
+        case .eventUpdate(let identifier):
+            return path(of: "/events/\(encodePathComponent(identifier))")
+        case .eventDelete(let identifier):
+            return path(of: "/events/\(encodePathComponent(identifier))")
+        case .eventSend:
+            return path(of: "/events/send")
+        case .automationCreate:
+            return path(of: "/automations")
+        case .automationList(status: let status, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/automations?limit=\(limit)")
+            if let status {
+                path += "&status=\(status)"
+            }
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .automationGet(let automationId):
+            return path(of: "/automations/\(automationId)")
+        case .automationUpdate(let automationId):
+            return path(of: "/automations/\(automationId)")
+        case .automationDelete(let automationId):
+            return path(of: "/automations/\(automationId)")
+        case .automationStop(let automationId):
+            return path(of: "/automations/\(automationId)/stop")
+        case .automationRunsList(automationId: let automationId, status: let status, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/automations/\(automationId)/runs?limit=\(limit)")
+            if let status {
+                path += "&status=\(status)"
+            }
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .automationRunGet(automationId: let automationId, runId: let runId):
+            return path(of: "/automations/\(automationId)/runs/\(runId)")
         }
     }
 }

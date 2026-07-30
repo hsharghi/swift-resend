@@ -173,22 +173,76 @@ let attachment = try await resendClient.emails.receiving.attachments.get(attachm
 `attachmentId` can be retreived from attachment list
 
 
-### Managing Audiences
+### Managing Segments
 
-Access the `AudienceClient` for managing audiences via the API. Refer to the [Resend Audience API](https://resend.com/docs/api-reference/audiences) for complete details.
+Access the `SegmentClient` for managing segments via the API. Refer to the [Resend Segments API](https://resend.com/docs/api-reference/segments/create-segment) for complete details.
 ~~~~swift
-let audience = try await resendClient.audiences.create(name: "marketing")
+let segment = try await resendClient.segments.create(name: "marketing")
 ~~~~
 
 ### Managing Contacts
 
-Access the `ContactClient` for managing contacts via the API. Refer to the [Resend Contact API](https://resend.com/docs/api-reference/contacts) for complete details.
+Contacts are global (not tied to a single audience). Refer to the [Resend Contacts API](https://resend.com/docs/api-reference/contacts/create-contact) and the [Audiences to Segments migration guide](https://resend.com/docs/dashboard/segments/migrating-from-audiences-to-segments).
 ~~~~swift
-let contactId = try await resendClient.contacts.create(audienceId: audience.id,
-                                                       email: "john@apple.com",
-                                                       firstName: "John",
-                                                       subscriptionStatus: true)
+let contactId = try await resendClient.contacts.create(
+    email: "john@apple.com",
+    firstName: "John",
+    unsubscribed: false,
+    segments: [segment.id]
+)
+
+let contact = try await resendClient.contacts.get(idOrEmail: contactId)
+_ = try await resendClient.contacts.addToSegment(contactId: contactId, segmentId: segment.id)
 ~~~~
+
+### Managing Topics
+
+Topics control subscription preferences. Refer to the [Resend Topics API](https://resend.com/docs/api-reference/topics/create-topic).
+~~~~swift
+let topic = try await resendClient.topics.create(
+    name: "Weekly Newsletter",
+    defaultSubscription: .optIn
+)
+
+_ = try await resendClient.contacts.updateTopics(
+    contactId: contactId,
+    topics: [.init(id: topic.id, subscription: .optIn)]
+)
+~~~~
+
+### Managing Events and Automations
+
+Define custom events and create automations that run when those events are sent.
+~~~~swift
+let event = try await resendClient.events.create(
+    name: "user.created",
+    schema: ["plan": .string]
+)
+
+let automation = try await resendClient.automations.create(
+    name: "Welcome series",
+    status: .disabled,
+    steps: [
+        .trigger(key: "start", eventName: "user.created"),
+        .sendEmail(key: "welcome", templateId: "TEMPLATE_ID")
+    ],
+    connections: [
+        .init(from: "start", to: "welcome")
+    ]
+)
+
+_ = try await resendClient.events.send(
+    event: "user.created",
+    email: "john@apple.com",
+    payload: ["plan": "pro"]
+)
+
+let runs = try await resendClient.automations.listRuns(automationId: automation.id)
+~~~~
+
+### Legacy Audiences
+
+`AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
 
 ## Error handling
 If a request to the API fails for any reason, a `ResendError` is thrown. Ensure you catch errors like any other throwing function.
@@ -211,8 +265,12 @@ catch let error as ResendError {
 - [x] Emails
   - [x] Sending
   - [x] Receiving
-- [x] Audiences
+- [x] Segments
 - [x] Contacts
+- [x] Topics
+- [x] Events
+- [x] Automations
+- [x] Audiences (deprecated)
 - [x] Domains
 - [x] API Keys
 - [x] Broadcasts
@@ -223,4 +281,3 @@ catch let error as ResendError {
 ## License
 
 This package is released under the MIT license. See [LICENSE](https://github.com/hsharghi/swift-resend/blob/main/LICENSE) for details.
-

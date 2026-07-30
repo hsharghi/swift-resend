@@ -78,10 +78,26 @@ public class ResendClient {
         BroadcastClient(httpClient: httpClient, apiKey: apiKey)
     }()
     
+    public lazy var segments: SegmentClient = {
+        SegmentClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
+    public lazy var topics: TopicClient = {
+        TopicClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
+    public lazy var events: EventClient = {
+        EventClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
+    public lazy var automations: AutomationClient = {
+        AutomationClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         
-        if response.status == .ok || response.status == .created {
+        if response.status == .ok || response.status == .created || response.status == .accepted {
             return try decodeResponse(T.self, from: byteBuffer)
         } else {
             let errorResponse = try decodeResponse(ErrorResponse.self, from: byteBuffer)
@@ -134,8 +150,11 @@ public class ResendClient {
             throw ResendError.invalidIdempotentRequest(errorResponse.message)
         case "concurrent_idempotent_requests":
             throw ResendError.concurrentIdempotentRequests(errorResponse.message)
+        case "application_error":
+            throw ResendError.internalServerError(errorResponse.message)
         default:
-            throw ResendError.unknownError
+            let name = errorResponse.name ?? "unknown"
+            throw ResendError.validationError("Unhandled API error (\(name)): \(errorResponse.message)")
         }
     }
     

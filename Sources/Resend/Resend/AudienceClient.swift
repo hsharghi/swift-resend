@@ -15,6 +15,7 @@ public class AudienceClient: ResendClient {
     }
     
     /// Create a list of contacts (Audience).
+    @available(*, deprecated, message: "Audiences have been replaced by Segments. Use resend.segments.create(name:) instead.")
     public func create(name: String) async throws -> AudienceCreateResponse {
         
         let body = AudienceCreate(name: name)
@@ -33,6 +34,7 @@ public class AudienceClient: ResendClient {
     
     
     /// Get an audience
+    @available(*, deprecated, message: "Audiences have been replaced by Segments. Use resend.segments.get(segmentId:) instead.")
     public func get(audienceId: String) async throws -> Audience {
         
         let response = try await httpClient.execute(
@@ -49,6 +51,7 @@ public class AudienceClient: ResendClient {
 
     
     /// Delete an audience
+    @available(*, deprecated, message: "Audiences have been replaced by Segments. Use resend.segments.delete(segmentId:) instead.")
     public func delete(audienceId: String) async throws -> AudienceDeleteResponse {
         
         let response = try await httpClient.execute(
@@ -65,6 +68,7 @@ public class AudienceClient: ResendClient {
     
     
     /// Retrieve a list of audiences.
+    @available(*, deprecated, message: "Audiences have been replaced by Segments. Use resend.segments.list() instead.")
     public func list() async throws -> [Audience] {
         
         let response = try await httpClient.execute(

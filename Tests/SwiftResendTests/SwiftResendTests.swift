@@ -498,6 +498,143 @@ final class SwiftResendTests: XCTestCase {
 
     }
 
+    // MARK: Segment / Global Contact / Topic Tests
+    
+    func testCreateSegment() async throws {
+        let list = try await resend.segments.list(limit: 100)
+        if list.data.count >= 3 {
+            XCTAssertGreaterThan(list.data.count, 0)
+            return
+        }
+        let response = try await resend.segments.create(name: "test-segment-\(UUID().uuidString.prefix(8))")
+        XCTAssertNotNil(response.id)
+    }
+    
+    func testGetSegment() async throws {
+        let list = try await resend.segments.list(limit: 20)
+        let segmentId: String
+        if let existing = list.data.first {
+            segmentId = existing.id
+        } else {
+            segmentId = try await resend.segments.create(name: "test-segment-get").id
+        }
+        let segment = try await resend.segments.get(segmentId: segmentId)
+        XCTAssertEqual(segment.id, segmentId)
+    }
+    
+    func testDeleteSegment() async throws {
+        let list = try await resend.segments.list(limit: 100)
+        let segmentId: String
+        if list.data.count >= 3, let existing = list.data.first {
+            segmentId = existing.id
+        } else {
+            segmentId = try await resend.segments.create(name: "test-segment-delete").id
+        }
+        let deleted = try await resend.segments.delete(segmentId: segmentId)
+        XCTAssertEqual(deleted.id, segmentId)
+        XCTAssertTrue(deleted.deleted)
+    }
+    
+    func testListSegments() async throws {
+        let list = try await resend.segments.list(limit: 20)
+        XCTAssertNotNil(list.data)
+    }
+    
+    func testCreateGlobalContact() async throws {
+        let contactId = try await resend.contacts.create(
+            email: "global-contact-\(UUID().uuidString)@example.com",
+            firstName: "Hadi",
+            unsubscribed: false
+        )
+        XCTAssertNotNil(contactId)
+    }
+    
+    func testGlobalContactLifecycle() async throws {
+        let email = "global-lifecycle-\(UUID().uuidString)@example.com"
+        let contactId = try await resend.contacts.create(
+            email: email,
+            firstName: "Hadi",
+            unsubscribed: false
+        )
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let contact = try await resend.contacts.get(idOrEmail: contactId)
+        XCTAssertEqual(contact.id, contactId)
+        XCTAssertEqual(contact.email, email)
+        XCTAssertEqual(contact.firstName, "Hadi")
+        XCTAssertFalse(contact.unsubscribed)
+        
+        _ = try await resend.contacts.update(idOrEmail: contactId, firstName: "John", unsubscribed: true)
+        let updated = try await resend.contacts.get(idOrEmail: contactId)
+        XCTAssertEqual(updated.firstName, "John")
+        XCTAssertTrue(updated.unsubscribed)
+        
+        let deleted = try await resend.contacts.delete(idOrEmail: contactId)
+        XCTAssertEqual(deleted.contact, contactId)
+        XCTAssertTrue(deleted.deleted)
+    }
+    
+    func testContactSegmentMembership() async throws {
+        let list = try await resend.segments.list(limit: 20)
+        let segmentId: String
+        if let existing = list.data.first {
+            segmentId = existing.id
+        } else {
+            segmentId = try await resend.segments.create(name: "test-membership-segment").id
+        }
+        let email = "segment-member-\(UUID().uuidString)@example.com"
+        let contactId = try await resend.contacts.create(email: email, firstName: "Hadi", unsubscribed: false)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let added = try await resend.contacts.addToSegment(contactId: contactId, segmentId: segmentId)
+        XCTAssertEqual(added.id, contactId)
+        XCTAssertEqual(added.audienceId, segmentId)
+        
+        let segments = try await resend.contacts.listSegments(contactId: contactId)
+        XCTAssertTrue(segments.data.contains(where: { $0.id == segmentId }))
+        
+        let removed = try await resend.contacts.removeFromSegment(contactId: contactId, segmentId: segmentId)
+        XCTAssertEqual(removed.id, contactId)
+        XCTAssertEqual(removed.audienceId, segmentId)
+        XCTAssertEqual(removed.deleted, true)
+    }
+    
+    func testCreateTopicAndAssignToContact() async throws {
+        let topic = try await resend.topics.create(
+            name: "test-topic-\(UUID().uuidString.prefix(8))",
+            defaultSubscription: .optIn,
+            description: "Test topic"
+        )
+        XCTAssertNotNil(topic.id)
+        
+        let contactId = try await resend.contacts.create(
+            email: "topic-contact-\(UUID().uuidString)@example.com",
+            firstName: "Hadi",
+            unsubscribed: false
+        )
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let updated = try await resend.contacts.updateTopics(
+            contactId: contactId,
+            topics: [.init(id: topic.id, subscription: .optIn)]
+        )
+        XCTAssertEqual(updated.id, contactId)
+        
+        let topics = try await resend.contacts.listTopics(contactId: contactId)
+        XCTAssertTrue(topics.data.contains(where: { $0.id == topic.id }))
+    }
+    
+    func testListGlobalContacts() async throws {
+        let email = "list-contact-\(UUID().uuidString)@example.com"
+        _ = try await resend.contacts.create(email: email, firstName: "Hadi", unsubscribed: false)
+        try await Task.sleep(for: .seconds(1))
+        let list = try await resend.contacts.list(limit: 20)
+        XCTAssertGreaterThan(list.data.count, 0)
+    }
+
     // MARK: Helper
     /// Delete all audiences created via tests
     func testDeleteAllAudience() async throws {
@@ -794,6 +931,228 @@ final class SwiftResendTests: XCTestCase {
         )) { error in
             XCTAssertEqual(error as? ResendError, ResendError.invalidIdempotencyKey("The idempotency key must be between 1-256 characters. Retry with a valid key or without supplying an idempotency key."))
         }
+    }
+    
+    // MARK: - Decoding Tests
+    
+    func testSegmentListDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let json = """
+        {
+            "object": "list",
+            "has_more": true,
+            "data": [
+                {
+                    "id": "78261eea-8f8b-4381-83c6-79fa7120f1cf",
+                    "name": "Registered Users",
+                    "created_at": "2024-10-06 22:59:55.977000+00"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(SegmentListResponse.self, from: json)
+        XCTAssertTrue(list.hasMore)
+        XCTAssertEqual(list.data.count, 1)
+        XCTAssertEqual(list.data[0].id, "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        XCTAssertEqual(list.data[0].name, "Registered Users")
+    }
+    
+    func testContactTopicListDecoding() throws {
+        let decoder = JSONDecoder()
+        let json = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "id": "b6d24b8e-af0b-4c3c-be0c-359bbd97381e",
+                    "name": "Weekly Newsletter",
+                    "description": "Weekly updates",
+                    "subscription": "opt_in"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(ContactTopicListResponse.self, from: json)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 1)
+        XCTAssertEqual(list.data[0].subscription, .optIn)
+        XCTAssertEqual(list.data[0].name, "Weekly Newsletter")
+    }
+    
+    func testAutomationStepEncodingAndDecoding() throws {
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        
+        let steps: [AutomationStep] = [
+            .trigger(key: "start", eventName: "user.created"),
+            .delay(key: "wait", duration: "1 hour"),
+            .sendEmail(key: "welcome", templateId: "34a080c9-b17d-4187-ad80-5af20266e535"),
+            .addToSegment(key: "segment", segmentId: "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        ]
+        
+        let data = try encoder.encode(steps)
+        let decoded = try decoder.decode([AutomationStep].self, from: data)
+        
+        XCTAssertEqual(decoded.count, 4)
+        XCTAssertEqual(decoded[0].key, "start")
+        XCTAssertEqual(decoded[0].type, .trigger)
+        if case .trigger(let eventName) = decoded[0].config {
+            XCTAssertEqual(eventName, "user.created")
+        } else {
+            XCTFail("Expected trigger config")
+        }
+        
+        if case .delay(let duration) = decoded[1].config {
+            XCTAssertEqual(duration, "1 hour")
+        } else {
+            XCTFail("Expected delay config")
+        }
+        
+        if case .sendEmail(let template, _, _, _) = decoded[2].config {
+            XCTAssertEqual(template.id, "34a080c9-b17d-4187-ad80-5af20266e535")
+        } else {
+            XCTFail("Expected sendEmail config")
+        }
+        
+        if case .addToSegment(let segmentId) = decoded[3].config {
+            XCTAssertEqual(segmentId, "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        } else {
+            XCTFail("Expected addToSegment config")
+        }
+    }
+    
+    func testContactSegmentResponseDecoding() throws {
+        let camelJSON = """
+        {
+            "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",
+            "audienceId": "78261eea-8f8b-4381-83c6-79fa7120f1cf"
+        }
+        """.data(using: .utf8)!
+        
+        let camel = try JSONDecoder().decode(ContactSegmentResponse.self, from: camelJSON)
+        XCTAssertEqual(camel.id, "e169aa45-1ecf-4183-9955-b1499d5701d3")
+        XCTAssertEqual(camel.audienceId, "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        XCTAssertEqual(camel.segmentId, "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        
+        let snakeJSON = """
+        {
+            "contact_id": "e169aa45-1ecf-4183-9955-b1499d5701d3",
+            "segment_id": "78261eea-8f8b-4381-83c6-79fa7120f1cf",
+            "deleted": true
+        }
+        """.data(using: .utf8)!
+        
+        let snake = try JSONDecoder().decode(ContactSegmentResponse.self, from: snakeJSON)
+        XCTAssertEqual(snake.id, "e169aa45-1ecf-4183-9955-b1499d5701d3")
+        XCTAssertEqual(snake.segmentId, "78261eea-8f8b-4381-83c6-79fa7120f1cf")
+        XCTAssertEqual(snake.deleted, true)
+    }
+    
+    func testEventSchemaDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let json = """
+        {
+            "object": "event",
+            "id": "c9b16d4f-ba6c-4e2e-b044-6bf4404e57fd",
+            "name": "user.created",
+            "schema": {
+                "plan": "string",
+                "trial": "boolean"
+            },
+            "created_at": "2024-10-01 12:00:00.000000+00",
+            "updated_at": null
+        }
+        """.data(using: .utf8)!
+        
+        let event = try decoder.decode(Event.self, from: json)
+        XCTAssertEqual(event.name, "user.created")
+        XCTAssertEqual(event.schema?["plan"], .string)
+        XCTAssertEqual(event.schema?["trial"], .boolean)
+    }
+    
+    // MARK: - Event / Automation Tests
+    
+    func testCreateAndListEvents() async throws {
+        let name = "test.event.\(UUID().uuidString.prefix(8))"
+        let created = try await resend.events.create(
+            name: name,
+            schema: ["plan": .string]
+        )
+        XCTAssertNotNil(created.id)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let event = try await resend.events.get(identifier: created.id)
+        XCTAssertEqual(event.id, created.id)
+        XCTAssertEqual(event.name, name)
+        
+        let list = try await resend.events.list(limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == created.id }))
+        
+        let deleted = try await resend.events.delete(identifier: created.id)
+        XCTAssertEqual(deleted.id, created.id)
+        XCTAssertTrue(deleted.deleted)
+    }
+    
+    func testCreateAutomation() async throws {
+        let eventName = "automation.trigger.\(UUID().uuidString.prefix(8))"
+        _ = try await resend.events.create(name: eventName)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let created = try await resend.automations.create(
+            name: "test-automation-\(UUID().uuidString.prefix(8))",
+            status: .disabled,
+            steps: [
+                .trigger(key: "start", eventName: eventName),
+                .delay(key: "wait", duration: "1 minute"),
+                .contactUpdate(key: "update", firstName: "Auto")
+            ],
+            connections: [
+                .init(from: "start", to: "wait"),
+                .init(from: "wait", to: "update")
+            ]
+        )
+        XCTAssertNotNil(created.id)
+        
+        let automation = try await resend.automations.get(automationId: created.id)
+        XCTAssertEqual(automation.id, created.id)
+        XCTAssertEqual(automation.status, .disabled)
+        
+        let list = try await resend.automations.list(limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == created.id }))
+        
+        let stopped = try await resend.automations.stop(automationId: created.id)
+        XCTAssertEqual(stopped.id, created.id)
+        
+        let deleted = try await resend.automations.delete(automationId: created.id)
+        XCTAssertEqual(deleted.id, created.id)
+        XCTAssertTrue(deleted.deleted)
+    }
+    
+    func testSendEvent() async throws {
+        let eventName = "send.event.\(UUID().uuidString.prefix(8))"
+        _ = try await resend.events.create(name: eventName)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let response = try await resend.events.send(
+            event: eventName,
+            email: "hadi@example.com",
+            payload: ["plan": "pro"]
+        )
+        XCTAssertEqual(response.event, eventName)
     }
 
 }
