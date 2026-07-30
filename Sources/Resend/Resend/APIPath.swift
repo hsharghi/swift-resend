@@ -81,6 +81,13 @@ enum APIPath {
     case automationStop(automationId: String)
     case automationRunsList(automationId: String, status: String?, limit: Int, after: String?, before: String?)
     case automationRunGet(automationId: String, runId: String)
+    case templateCreate
+    case templateList(limit: Int, after: String?, before: String?)
+    case templateGet(idOrAlias: String)
+    case templateUpdate(idOrAlias: String)
+    case templateDelete(idOrAlias: String)
+    case templatePublish(idOrAlias: String)
+    case templateDuplicate(idOrAlias: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -293,6 +300,22 @@ enum APIPath {
             return path
         case .automationRunGet(automationId: let automationId, runId: let runId):
             return path(of: "/automations/\(automationId)/runs/\(runId)")
+        case .templateCreate:
+            return path(of: "/templates")
+        case .templateList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/templates?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .templateGet(let idOrAlias):
+            return path(of: "/templates/\(encodePathComponent(idOrAlias))")
+        case .templateUpdate(let idOrAlias):
+            return path(of: "/templates/\(encodePathComponent(idOrAlias))")
+        case .templateDelete(let idOrAlias):
+            return path(of: "/templates/\(encodePathComponent(idOrAlias))")
+        case .templatePublish(let idOrAlias):
+            return path(of: "/templates/\(encodePathComponent(idOrAlias))/publish")
+        case .templateDuplicate(let idOrAlias):
+            return path(of: "/templates/\(encodePathComponent(idOrAlias))/duplicate")
         }
     }
 }

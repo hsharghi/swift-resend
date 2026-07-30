@@ -1081,6 +1081,119 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(event.schema?["trial"], .boolean)
     }
     
+    func testTemplateListAndDetailDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",
+                    "name": "reset-password",
+                    "status": "draft",
+                    "published_at": null,
+                    "created_at": "2024-10-06 23:47:56.678000+00",
+                    "updated_at": "2024-10-06 23:47:56.678000+00",
+                    "alias": "reset-password"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(TemplateListResponse.self, from: listJSON)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 1)
+        XCTAssertEqual(list.data[0].id, "e169aa45-1ecf-4183-9955-b1499d5701d3")
+        XCTAssertEqual(list.data[0].status, .draft)
+        XCTAssertNil(list.data[0].publishedAt)
+        XCTAssertEqual(list.data[0].alias, "reset-password")
+        
+        let detailJSON = """
+        {
+            "object": "template",
+            "id": "34a080c9-b17d-4187-ad80-5af20266e535",
+            "current_version_id": "b2693018-7abb-4b4b-b4cb-aadf72dc06bd",
+            "alias": "order-confirmation",
+            "name": "order-confirmation",
+            "created_at": "2024-10-06 23:47:56.678000+00",
+            "updated_at": "2024-10-06 23:47:56.678000+00",
+            "status": "published",
+            "published_at": "2024-10-06 23:47:56.678000+00",
+            "from": "John Doe <john.doe@example.com>",
+            "subject": "Hello, world!",
+            "reply_to": null,
+            "html": "<p>Name: {{{PRODUCT}}}</p><p>Total: {{{PRICE}}}</p>",
+            "text": "Hello, world!",
+            "variables": [
+                {
+                    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",
+                    "key": "PRODUCT",
+                    "type": "string",
+                    "fallback_value": "item",
+                    "created_at": "2024-10-06 23:47:56.678000+00",
+                    "updated_at": "2024-10-06 23:47:56.678000+00"
+                },
+                {
+                    "id": "a169aa45-1ecf-4183-9955-b1499d5701d4",
+                    "key": "PRICE",
+                    "type": "number",
+                    "fallback_value": 25,
+                    "created_at": "2024-10-06 23:47:56.678000+00",
+                    "updated_at": "2024-10-06 23:47:56.678000+00"
+                }
+            ],
+            "has_unpublished_versions": false
+        }
+        """.data(using: .utf8)!
+        
+        let template = try decoder.decode(Template.self, from: detailJSON)
+        XCTAssertEqual(template.id, "34a080c9-b17d-4187-ad80-5af20266e535")
+        XCTAssertEqual(template.status, .published)
+        XCTAssertNotNil(template.publishedAt)
+        XCTAssertEqual(template.variables?.count, 2)
+        XCTAssertEqual(template.variables?[0].fallbackValue, .string("item"))
+        XCTAssertEqual(template.variables?[1].fallbackValue, .number(25))
+        XCTAssertEqual(template.hasUnpublishedVersions, false)
+    }
+    
+    func testTemplateVariableAndEmailTemplateEncoding() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        
+        let variables: [TemplateVariableInput] = [
+            .string("PRODUCT", fallback: "item"),
+            .number("PRICE", fallback: 25)
+        ]
+        let variablesJSON = String(data: try encoder.encode(variables), encoding: .utf8)!
+        XCTAssertTrue(variablesJSON.contains("\"fallback_value\":\"item\""))
+        XCTAssertTrue(variablesJSON.contains("\"fallback_value\":25"))
+        XCTAssertTrue(variablesJSON.contains("\"type\":\"string\""))
+        XCTAssertTrue(variablesJSON.contains("\"type\":\"number\""))
+        
+        let email = ResendEmail(
+            from: "App <onboarding@resend.dev>",
+            to: ["user@example.com"],
+            subject: "Order confirmation",
+            template: EmailTemplate(
+                id: "order-confirmation",
+                variables: [
+                    "PRODUCT": .string("Widget"),
+                    "PRICE": .number(19.99)
+                ]
+            )
+        )
+        let emailJSON = String(data: try encoder.encode(email), encoding: .utf8)!
+        XCTAssertTrue(emailJSON.contains("\"template\":{"))
+        XCTAssertTrue(emailJSON.contains("\"id\":\"order-confirmation\""))
+        XCTAssertFalse(emailJSON.contains("\"html\""))
+        XCTAssertFalse(emailJSON.contains("\"text\""))
+    }
+    
     // MARK: - Event / Automation Tests
     
     func testCreateAndListEvents() async throws {
@@ -1153,6 +1266,63 @@ final class SwiftResendTests: XCTestCase {
             payload: ["plan": "pro"]
         )
         XCTAssertEqual(response.event, eventName)
+    }
+    
+    // MARK: - Template Tests
+    
+    func testTemplateLifecycle() async throws {
+        let suffix = UUID().uuidString.prefix(8)
+        let name = "test-template-\(suffix)"
+        let alias = "test-alias-\(suffix)"
+        
+        let created = try await resend.templates.create(
+            name: name,
+            html: "<p>Name: {{{PRODUCT}}}</p><p>Total: {{{PRICE}}}</p>",
+            alias: alias,
+            from: .init(email: "onboarding@resend.dev", name: "App"),
+            subject: "Order confirmation",
+            variables: [
+                .string("PRODUCT", fallback: "item"),
+                .number("PRICE", fallback: 25)
+            ]
+        )
+        XCTAssertNotNil(created.id)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let template = try await resend.templates.get(idOrAlias: created.id)
+        XCTAssertEqual(template.id, created.id)
+        XCTAssertEqual(template.name, name)
+        XCTAssertEqual(template.alias, alias)
+        XCTAssertEqual(template.status, .draft)
+        
+        let updated = try await resend.templates.update(
+            idOrAlias: created.id,
+            html: "<p>Hello {{{PRODUCT}}}</p>"
+        )
+        XCTAssertEqual(updated.id, created.id)
+        
+        let list = try await resend.templates.list(limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == created.id }))
+        
+        let published = try await resend.templates.publish(idOrAlias: created.id)
+        XCTAssertEqual(published.id, created.id)
+        
+        let publishedTemplate = try await resend.templates.get(idOrAlias: alias)
+        XCTAssertEqual(publishedTemplate.status, .published)
+        XCTAssertNotNil(publishedTemplate.publishedAt)
+        
+        let duplicated = try await resend.templates.duplicate(idOrAlias: created.id)
+        XCTAssertNotNil(duplicated.id)
+        XCTAssertNotEqual(duplicated.id, created.id)
+        
+        let deletedDuplicate = try await resend.templates.delete(idOrAlias: duplicated.id)
+        XCTAssertEqual(deletedDuplicate.id, duplicated.id)
+        XCTAssertTrue(deletedDuplicate.deleted)
+        
+        let deleted = try await resend.templates.delete(idOrAlias: created.id)
+        XCTAssertEqual(deleted.id, created.id)
+        XCTAssertTrue(deleted.deleted)
     }
 
 }

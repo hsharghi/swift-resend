@@ -44,6 +44,9 @@ public struct ResendEmail {
     /// An array of objects in which you can specify any attachments you want to include.
     public var tags: [EmailTags]?
     
+    /// Use a published template to send the email. If provided, do not include html or text.
+    public var template: EmailTemplate?
+    
     public init(from: EmailAddress, 
          to: [EmailAddress],
          subject: String,
@@ -55,7 +58,8 @@ public struct ResendEmail {
          html: String? = nil,
          headers: [EmailHeaders]? = nil,
          attachments: [EmailAttachment]? = nil,
-         tags: [EmailTags]? = nil) {
+         tags: [EmailTags]? = nil,
+         template: EmailTemplate? = nil) {
         self.from = from
         self.to = to
         self.subject = subject
@@ -68,6 +72,7 @@ public struct ResendEmail {
         self.headers = headers
         self.attachments = attachments
         self.tags = tags
+        self.template = template
     }
     
     
@@ -84,6 +89,7 @@ public struct ResendEmail {
         case headers
         case attachments
         case tags
+        case template
     }
 
 }
@@ -104,5 +110,6 @@ extension ResendEmail: Encodable {
         try container.encodeIfPresent(headers?.objectArray, forKey: .headers)
         try container.encodeIfPresent(attachments, forKey: .attachments)
         try container.encodeIfPresent(tags, forKey: .tags)
+        try container.encodeIfPresent(template, forKey: .template)
     }
 }

@@ -240,6 +240,38 @@ _ = try await resendClient.events.send(
 let runs = try await resendClient.automations.listRuns(automationId: automation.id)
 ~~~~
 
+### Managing Templates
+
+Create, publish, and use email templates. Refer to the [Resend Templates API](https://resend.com/docs/api-reference/templates/create-template).
+~~~~swift
+let template = try await resendClient.templates.create(
+    name: "order-confirmation",
+    html: "<p>Name: {{{PRODUCT}}}</p><p>Total: {{{PRICE}}}</p>",
+    alias: "order-confirmation",
+    from: .init(email: "onboarding@resend.dev", name: "App"),
+    subject: "Order confirmation",
+    variables: [
+        .string("PRODUCT", fallback: "item"),
+        .number("PRICE", fallback: 25)
+    ]
+)
+
+_ = try await resendClient.templates.publish(idOrAlias: template.id)
+
+let emailId = try await resendClient.emails.send(email: .init(
+    from: .init(email: "onboarding@resend.dev", name: "App"),
+    to: ["john@apple.com"],
+    subject: "Order confirmation",
+    template: EmailTemplate(
+        id: "order-confirmation",
+        variables: [
+            "PRODUCT": .string("Widget"),
+            "PRICE": .number(19.99)
+        ]
+    )
+))
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -275,7 +307,7 @@ catch let error as ResendError {
 - [x] API Keys
 - [x] Broadcasts
 - [ ] Webhooks
-- [ ] Templates
+- [x] Templates
 
 
 ## License
