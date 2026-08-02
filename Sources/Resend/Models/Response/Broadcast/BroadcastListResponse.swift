@@ -6,14 +6,20 @@ public struct BroadcastListResponse: Decodable {
 
 public struct BroadcastSummary: Decodable {
     public var id: String
-    public var audienceId: String
+    /// The ID of the segment this broadcast targets.
+    public var segmentId: String
     public var status: String
     public var createdAt: Date
     public var scheduledAt: EmailSchedule?
     public var sentAt: Date?
 
+    /// Audiences are now called Segments. Prefer `segmentId`.
+    @available(*, deprecated, renamed: "segmentId", message: "Audiences have been replaced by Segments. Use segmentId instead.")
+    public var audienceId: String { segmentId }
+
     private enum CodingKeys: String, CodingKey {
         case id
+        case segmentId = "segment_id"
         case audienceId = "audience_id"
         case status
         case createdAt = "created_at"
@@ -25,7 +31,8 @@ public struct BroadcastSummary: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         id = try container.decode(String.self, forKey: .id)
-        audienceId = try container.decode(String.self, forKey: .audienceId)
+        segmentId = try container.decodeIfPresent(String.self, forKey: .segmentId)
+            ?? container.decode(String.self, forKey: .audienceId)
         status = try container.decode(String.self, forKey: .status)
 
         createdAt = try Self.decodeDate(from: container, forKey: .createdAt)

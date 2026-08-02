@@ -762,10 +762,9 @@ final class SwiftResendTests: XCTestCase {
 
     // MARK: Broadcast Tests
     func testCreateBroadcast() async throws {
-        // Create a test audience
-        let audience = try await resend.audiences.create(name: "test-broadcast-audience")
+        let segment = try await resend.segments.create(name: "test-broadcast-segment")
         let broadcast = BroadcastCreate(
-            audienceId: audience.id,
+            segmentId: segment.id,
             from: EmailAddress(email: "tester@example.com", name: "Tester"),
             subject: "Test Broadcast",
             html: "<h1>Hello {{{FIRST_NAME|there}}}</h1>",
@@ -783,10 +782,9 @@ final class SwiftResendTests: XCTestCase {
     }
 
     func testGetBroadcast() async throws {
-        // Create a test audience and broadcast
-        let audience = try await resend.audiences.create(name: "test-broadcast-audience-get")
+        let segment = try await resend.segments.create(name: "test-broadcast-segment-get")
         let broadcast = BroadcastCreate(
-            audienceId: audience.id,
+            segmentId: segment.id,
             from: EmailAddress(email: "tester@example.com", name: "Tester"),
             subject: "Test Broadcast Get",
             html: "<h1>Hello</h1>",
@@ -795,15 +793,14 @@ final class SwiftResendTests: XCTestCase {
         let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
         let getResponse = try await resend.broadcasts.get(broadcastId: createResponse.id)
         XCTAssertEqual(getResponse.id, createResponse.id)
-        XCTAssertEqual(getResponse.audienceId, audience.id)
+        XCTAssertEqual(getResponse.segmentId, segment.id)
         XCTAssertEqual(getResponse.subject, "Test Broadcast Get")
     }
 
     func testUpdateBroadcast() async throws {
-        // Create a test audience and broadcast
-        let audience = try await resend.audiences.create(name: "test-broadcast-audience-update")
+        let segment = try await resend.segments.create(name: "test-broadcast-segment-update")
         let broadcast = BroadcastCreate(
-            audienceId: audience.id,
+            segmentId: segment.id,
             from: EmailAddress(email: "tester@example.com", name: "Tester"),
             subject: "Test Broadcast Update",
             html: "<h1>Before Update</h1>",
@@ -821,10 +818,9 @@ final class SwiftResendTests: XCTestCase {
     }
 
     func testSendBroadcast() async throws {
-        // Create a test audience and broadcast
-        let audience = try await resend.audiences.create(name: "test-broadcast-audience-send")
+        let segment = try await resend.segments.create(name: "test-broadcast-segment-send")
         let broadcast = BroadcastCreate(
-            audienceId: audience.id,
+            segmentId: segment.id,
             from: EmailAddress(email: "tester@example.com", name: "Tester"),
             subject: "Test Broadcast Send",
             html: "<h1>Send Test</h1>",
@@ -836,10 +832,9 @@ final class SwiftResendTests: XCTestCase {
     }
 
     func testDeleteBroadcast() async throws {
-        // Create a test audience and broadcast
-        let audience = try await resend.audiences.create(name: "test-broadcast-audience-delete")
+        let segment = try await resend.segments.create(name: "test-broadcast-segment-delete")
         let broadcast = BroadcastCreate(
-            audienceId: audience.id,
+            segmentId: segment.id,
             from: EmailAddress(email: "tester@example.com", name: "Tester"),
             subject: "Test Broadcast Delete",
             html: "<h1>Delete Test</h1>",
@@ -848,6 +843,19 @@ final class SwiftResendTests: XCTestCase {
         let createResponse = try await resend.broadcasts.create(broadcast: broadcast)
         let deleteResponse = try await resend.broadcasts.delete(broadcastId: createResponse.id)
         XCTAssertEqual(deleteResponse.id, createResponse.id)
+    }
+
+    func testBroadcastCreateEncodesSegmentId() throws {
+        let broadcast = BroadcastCreate(
+            segmentId: "seg-123",
+            from: EmailAddress(email: "tester@example.com"),
+            subject: "Encode Test",
+            html: "<p>hi</p>"
+        )
+        let data = try JSONEncoder().encode(broadcast)
+        let json = String(data: data, encoding: .utf8)!
+        XCTAssertTrue(json.contains("\"segment_id\":\"seg-123\""))
+        XCTAssertFalse(json.contains("audience_id"))
     }
     
     // MARK: - EmailSchedule Decoding Tests
@@ -876,7 +884,7 @@ final class SwiftResendTests: XCTestCase {
 
         let broadcastWithDate = try decoder.decode(BroadcastSummary.self, from: dateJSON)
         XCTAssertEqual(broadcastWithDate.id, "test-id")
-        XCTAssertEqual(broadcastWithDate.audienceId, "audience-id")
+        XCTAssertEqual(broadcastWithDate.segmentId, "audience-id")
         XCTAssertEqual(broadcastWithDate.status, "draft")
 
         if case .date(let date) = broadcastWithDate.scheduledAt {
@@ -902,7 +910,7 @@ final class SwiftResendTests: XCTestCase {
 
         let broadcastWithString = try decoder.decode(BroadcastSummary.self, from: stringJSON)
         XCTAssertEqual(broadcastWithString.id, "test-id-2")
-        XCTAssertEqual(broadcastWithString.audienceId, "audience-id-2")
+        XCTAssertEqual(broadcastWithString.segmentId, "audience-id-2")
         XCTAssertEqual(broadcastWithString.status, "scheduled")
 
         if case .string(let scheduleString) = broadcastWithString.scheduledAt {
@@ -925,9 +933,22 @@ final class SwiftResendTests: XCTestCase {
 
         let broadcastWithNull = try decoder.decode(BroadcastSummary.self, from: nullJSON)
         XCTAssertEqual(broadcastWithNull.id, "test-id-3")
-        XCTAssertEqual(broadcastWithNull.audienceId, "audience-id-3")
+        XCTAssertEqual(broadcastWithNull.segmentId, "audience-id-3")
         XCTAssertEqual(broadcastWithNull.status, "sent")
         XCTAssertNil(broadcastWithNull.scheduledAt)
+
+        // --- segment_id preferred when present ---
+        let segmentJSON = """
+        {
+            "id": "test-id-4",
+            "segment_id": "segment-id-4",
+            "status": "draft",
+            "created_at": "2024-01-01T00:00:00.000000Z"
+        }
+        """.data(using: .utf8)!
+
+        let broadcastWithSegment = try decoder.decode(BroadcastSummary.self, from: segmentJSON)
+        XCTAssertEqual(broadcastWithSegment.segmentId, "segment-id-4")
     }
     
     func testSendWithIdempotencyKey() async throws {

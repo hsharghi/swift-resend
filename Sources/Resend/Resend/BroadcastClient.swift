@@ -6,7 +6,7 @@ public class BroadcastClient: ResendClient {
         super.init(httpClient: httpClient, apiKey: apiKey)
     }
 
-    /// Create a new broadcast to send to your audience.
+    /// Create a new broadcast to send to your segment.
     public func create(broadcast: BroadcastCreate) async throws -> BroadcastCreateResponse {
         let response = try await httpClient.execute(
             request: .init(
