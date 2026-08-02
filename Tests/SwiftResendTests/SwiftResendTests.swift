@@ -1429,5 +1429,99 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(deleted.id, created.id)
         XCTAssertTrue(deleted.deleted)
     }
+    
+    // MARK: - Suppression Tests
+    
+    func testSuppressionListDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "object": "suppression",
+                    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",
+                    "email": "steve.wozniak@example.com",
+                    "origin": "manual",
+                    "source_id": null,
+                    "created_at": "2024-10-06 23:47:56.678000+00"
+                },
+                {
+                    "object": "suppression",
+                    "id": "520784e2-887d-4c25-b53c-4ad46ad38100",
+                    "email": "susan.kare@example.com",
+                    "origin": "bounce",
+                    "source_id": "4ef9a417-02e9-4d39-ad75-9611e0fcc33c",
+                    "created_at": "2024-10-07 08:12:03.412000+00"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(SuppressionListResponse.self, from: listJSON)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 2)
+        XCTAssertEqual(list.data[0].origin, .manual)
+        XCTAssertNil(list.data[0].sourceId)
+        XCTAssertEqual(list.data[1].origin, .bounce)
+        XCTAssertEqual(list.data[1].sourceId, "4ef9a417-02e9-4d39-ad75-9611e0fcc33c")
+    }
+    
+    func testSuppressionBatchEncoding() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        
+        let addJSON = String(data: try encoder.encode(SuppressionBatchAdd(emails: ["a@example.com", "b@example.com"])), encoding: .utf8)!
+        XCTAssertTrue(addJSON.contains("\"emails\""))
+        XCTAssertTrue(addJSON.contains("a@example.com"))
+        
+        let removeByEmail = String(data: try encoder.encode(SuppressionBatchRemove(emails: ["a@example.com"])), encoding: .utf8)!
+        XCTAssertTrue(removeByEmail.contains("\"emails\""))
+        XCTAssertFalse(removeByEmail.contains("\"ids\""))
+        
+        let removeById = String(data: try encoder.encode(SuppressionBatchRemove(ids: ["e169aa45-1ecf-4183-9955-b1499d5701d3"])), encoding: .utf8)!
+        XCTAssertTrue(removeById.contains("\"ids\""))
+        XCTAssertFalse(removeById.contains("\"emails\""))
+    }
+    
+    func testSuppressionLifecycle() async throws {
+        let email = "suppress-\(UUID().uuidString.prefix(8))@example.com"
+        
+        let added = try await resend.suppressions.add(email: email)
+        XCTAssertNotNil(added.id)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let suppression = try await resend.suppressions.get(idOrEmail: email)
+        XCTAssertEqual(suppression.id, added.id)
+        XCTAssertEqual(suppression.email.lowercased(), email.lowercased())
+        XCTAssertEqual(suppression.origin, .manual)
+        
+        let list = try await resend.suppressions.list(origin: .manual, limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == added.id }))
+        
+        let removed = try await resend.suppressions.remove(idOrEmail: added.id)
+        XCTAssertEqual(removed.id, added.id)
+        XCTAssertTrue(removed.deleted)
+    }
+    
+    func testSuppressionBatchLifecycle() async throws {
+        let email1 = "batch-suppress-1-\(UUID().uuidString.prefix(8))@example.com"
+        let email2 = "batch-suppress-2-\(UUID().uuidString.prefix(8))@example.com"
+        
+        let added = try await resend.suppressions.batchAdd(emails: [email1, email2])
+        XCTAssertEqual(added.data.count, 2)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let removed = try await resend.suppressions.batchRemove(emails: [email1, email2])
+        XCTAssertEqual(removed.data.count, 2)
+        XCTAssertTrue(removed.data.allSatisfy { $0.deleted })
+    }
 
 }

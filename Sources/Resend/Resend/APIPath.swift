@@ -93,6 +93,12 @@ enum APIPath {
     case webhookGet(webhookId: String)
     case webhookUpdate(webhookId: String)
     case webhookDelete(webhookId: String)
+    case suppressionAdd
+    case suppressionList(origin: String?, limit: Int, after: String?, before: String?)
+    case suppressionGet(idOrEmail: String)
+    case suppressionRemove(idOrEmail: String)
+    case suppressionBatchAdd
+    case suppressionBatchRemove
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -333,6 +339,23 @@ enum APIPath {
             return path(of: "/webhooks/\(webhookId)")
         case .webhookDelete(let webhookId):
             return path(of: "/webhooks/\(webhookId)")
+        case .suppressionAdd:
+            return path(of: "/suppressions")
+        case .suppressionList(origin: let origin, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/suppressions?limit=\(limit)")
+            if let origin {
+                path += "&origin=\(origin)"
+            }
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .suppressionGet(let idOrEmail):
+            return path(of: "/suppressions/\(encodePathComponent(idOrEmail))")
+        case .suppressionRemove(let idOrEmail):
+            return path(of: "/suppressions/\(encodePathComponent(idOrEmail))")
+        case .suppressionBatchAdd:
+            return path(of: "/suppressions/batch/add")
+        case .suppressionBatchRemove:
+            return path(of: "/suppressions/batch/remove")
         }
     }
 }

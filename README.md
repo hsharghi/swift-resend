@@ -291,6 +291,29 @@ _ = try await resendClient.webhooks.update(
 let list = try await resendClient.webhooks.list()
 ~~~~
 
+### Managing Suppressions
+
+Add and remove addresses from the suppression list. Refer to the [Resend Suppressions API](https://resend.com/docs/api-reference/suppressions/add-suppression).
+~~~~swift
+let suppression = try await resendClient.suppressions.add(
+    email: "user@example.com"
+)
+
+let item = try await resendClient.suppressions.get(idOrEmail: "user@example.com")
+
+_ = try await resendClient.suppressions.batchAdd(emails: [
+    "one@example.com",
+    "two@example.com"
+])
+
+_ = try await resendClient.suppressions.batchRemove(emails: [
+    "one@example.com",
+    "two@example.com"
+])
+
+_ = try await resendClient.suppressions.remove(idOrEmail: suppression.id)
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -327,6 +350,7 @@ catch let error as ResendError {
 - [x] Broadcasts
 - [x] Webhooks
 - [x] Templates
+- [x] Suppressions
 
 
 ## License
