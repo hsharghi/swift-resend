@@ -114,6 +114,14 @@ public class ResendClient {
         LogClient(httpClient: httpClient, apiKey: apiKey)
     }()
     
+    public lazy var oauthGrants: OAuthGrantClient = {
+        OAuthGrantClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
+    public lazy var oauth: OAuthClient = {
+        OAuthClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         

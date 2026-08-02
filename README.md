@@ -359,6 +359,39 @@ if let first = logs.data.first {
 }
 ~~~~
 
+### Managing OAuth Grants
+
+List and revoke OAuth grants for your team. Refer to the [Resend OAuth Grants API](https://resend.com/docs/api-reference/oauth/list-grants).
+
+> **Note:** Client registration and the authorization redirect are not wrapped by this SDK. Use the [Resend OAuth API docs](https://resend.com/docs/api-reference/oauth/register) for those steps. Token exchange and refresh are available via `resend.oauth.token(...)`.
+
+~~~~swift
+let grants = try await resendClient.oauthGrants.list(limit: 20)
+
+if let grant = grants.data.first(where: { $0.revokedAt == nil }) {
+    print(grant.client.name, grant.scopes)
+    // _ = try await resendClient.oauthGrants.revoke(grantId: grant.id)
+}
+
+// Exchange an authorization code (PKCE) — does not use the team API key
+let tokens = try await resendClient.oauth.token(
+    OAuthAuthorizationCodeTokenRequest(
+        clientId: "YOUR_CLIENT_ID",
+        code: "AUTHORIZATION_CODE",
+        redirectUri: "http://127.0.0.1:49152/oauth/callback",
+        codeVerifier: "CODE_VERIFIER"
+    )
+)
+
+// Refresh an access token
+let refreshed = try await resendClient.oauth.token(
+    OAuthRefreshTokenRequest(
+        clientId: "YOUR_CLIENT_ID",
+        refreshToken: tokens.refreshToken ?? ""
+    )
+)
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -398,6 +431,8 @@ catch let error as ResendError {
 - [x] Suppressions
 - [x] Contact Properties
 - [x] Logs
+- [x] OAuth Grants
+- [x] OAuth Token (exchange / refresh)
 
 
 ## License

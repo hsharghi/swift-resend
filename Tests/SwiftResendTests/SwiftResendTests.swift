@@ -1782,5 +1782,103 @@ final class SwiftResendTests: XCTestCase {
             XCTAssertEqual(log.method, first.method)
         }
     }
+    
+    // MARK: - OAuth Grant Tests
+    
+    func testOAuthGrantListAndRevokeDecoding() throws {
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "id": "650e8400-e29b-41d4-a716-446655440001",
+                    "client_id": "430eed87-632a-4ea6-90db-0aace67ec228",
+                    "scopes": ["emails:send"],
+                    "resource": null,
+                    "created_at": "2026-04-08 00:11:13.110779+00",
+                    "revoked_at": null,
+                    "revoked_reason": null,
+                    "client": {
+                        "name": "Resend CLI",
+                        "logo_uri": "https://example.com/logo.png"
+                    }
+                },
+                {
+                    "id": "650e8400-e29b-41d4-a716-446655440002",
+                    "client_id": "430eed87-632a-4ea6-90db-0aace67ec228",
+                    "scopes": ["emails:send", "domains:read"],
+                    "resource": "https://api.resend.com",
+                    "created_at": "2026-04-07 00:11:13.110779+00",
+                    "revoked_at": "2026-04-09 00:11:13.110779+00",
+                    "revoked_reason": "revoked_from_api",
+                    "client": {
+                        "name": "Resend CLI",
+                        "logo_uri": null
+                    }
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try JSONDecoder().decode(OAuthGrantListResponse.self, from: listJSON)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 2)
+        XCTAssertEqual(list.data[0].id, "650e8400-e29b-41d4-a716-446655440001")
+        XCTAssertEqual(list.data[0].scopes, ["emails:send"])
+        XCTAssertNil(list.data[0].resource)
+        XCTAssertNil(list.data[0].revokedAt)
+        XCTAssertEqual(list.data[0].client.name, "Resend CLI")
+        XCTAssertEqual(list.data[0].client.logoUri, "https://example.com/logo.png")
+        XCTAssertEqual(list.data[1].resource, "https://api.resend.com")
+        XCTAssertNotNil(list.data[1].revokedAt)
+        XCTAssertEqual(list.data[1].revokedReason, "revoked_from_api")
+        XCTAssertNil(list.data[1].client.logoUri)
+        
+        let revokeJSON = """
+        {
+            "object": "oauth_grant",
+            "id": "650e8400-e29b-41d4-a716-446655440001",
+            "revoked_at": "2026-04-08T00:11:13.110Z",
+            "revoked_reason": "revoked_from_api"
+        }
+        """.data(using: .utf8)!
+        
+        let revoked = try JSONDecoder().decode(OAuthGrantRevokeResponse.self, from: revokeJSON)
+        XCTAssertEqual(revoked.object, "oauth_grant")
+        XCTAssertEqual(revoked.id, "650e8400-e29b-41d4-a716-446655440001")
+        XCTAssertEqual(revoked.revokedReason, "revoked_from_api")
+        XCTAssertNotNil(revoked.revokedAt)
+    }
+    
+    func testListOAuthGrants() async throws {
+        let list = try await resend.oauthGrants.list(limit: 5)
+        XCTAssertGreaterThanOrEqual(list.data.count, 0)
+        
+        if let first = list.data.first {
+            XCTAssertFalse(first.id.isEmpty)
+            XCTAssertFalse(first.clientId.isEmpty)
+            XCTAssertFalse(first.client.name.isEmpty)
+        }
+    }
+    
+    func testOAuthTokenResponseDecoding() throws {
+        let json = """
+        {
+            "access_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.example",
+            "token_type": "Bearer",
+            "expires_in": 900,
+            "refresh_token": "JcL7aYfE7S9h3L4qv0o2e1w8m6n5b3x9RkP2tD4uV6Q",
+            "scope": "emails:send"
+        }
+        """.data(using: .utf8)!
+        
+        let token = try JSONDecoder().decode(OAuthTokenResponse.self, from: json)
+        XCTAssertEqual(token.tokenType, "Bearer")
+        XCTAssertEqual(token.expiresIn, 900)
+        XCTAssertEqual(token.scope, "emails:send")
+        XCTAssertEqual(token.refreshToken, "JcL7aYfE7S9h3L4qv0o2e1w8m6n5b3x9RkP2tD4uV6Q")
+        XCTAssertTrue(token.accessToken.hasPrefix("eyJ"))
+    }
 
 }

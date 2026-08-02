@@ -109,6 +109,9 @@ enum APIPath {
     case contactPropertyDelete(propertyId: String)
     case logList(limit: Int, after: String?, before: String?)
     case logGet(logId: String)
+    case oauthGrantList(limit: Int, after: String?, before: String?)
+    case oauthGrantRevoke(grantId: String)
+    case oauthToken
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -390,6 +393,14 @@ enum APIPath {
             return path
         case .logGet(let logId):
             return path(of: "/logs/\(logId)")
+        case .oauthGrantList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/oauth/grants?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .oauthGrantRevoke(let grantId):
+            return path(of: "/oauth/grants/\(grantId)")
+        case .oauthToken:
+            return path(of: "/oauth/token")
         }
     }
 }
