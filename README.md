@@ -314,6 +314,26 @@ _ = try await resendClient.suppressions.batchRemove(emails: [
 _ = try await resendClient.suppressions.remove(idOrEmail: suppression.id)
 ~~~~
 
+### Managing Contact Properties
+
+Define custom properties for contacts. Refer to the [Resend Contact Properties API](https://resend.com/docs/api-reference/contact-properties/create-contact-property).
+~~~~swift
+let property = try await resendClient.contactProperties.create(
+    key: "company_name",
+    type: .string,
+    fallbackValue: .string("Acme Corp")
+)
+
+let item = try await resendClient.contactProperties.get(propertyId: property.id)
+
+_ = try await resendClient.contactProperties.update(
+    propertyId: property.id,
+    fallbackValue: .string("Example Company")
+)
+
+let list = try await resendClient.contactProperties.list()
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -351,6 +371,7 @@ catch let error as ResendError {
 - [x] Webhooks
 - [x] Templates
 - [x] Suppressions
+- [x] Contact Properties
 
 
 ## License

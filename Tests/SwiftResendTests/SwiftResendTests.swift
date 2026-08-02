@@ -1523,5 +1523,93 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(removed.data.count, 2)
         XCTAssertTrue(removed.data.allSatisfy { $0.deleted })
     }
+    
+    // MARK: - Contact Property Tests
+    
+    func testContactPropertyListDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "id": "b6d24b8e-af0b-4c3c-be0c-359bbd97381e",
+                    "key": "company_name",
+                    "type": "string",
+                    "fallback_value": "Acme Corp",
+                    "created_at": "2024-04-08 00:11:13.110779+00"
+                },
+                {
+                    "id": "a6d24b8e-af0b-4c3c-be0c-359bbd97381f",
+                    "key": "employee_count",
+                    "type": "number",
+                    "fallback_value": 10,
+                    "created_at": "2024-04-08 00:11:13.110779+00"
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(ContactPropertyListResponse.self, from: listJSON)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 2)
+        XCTAssertEqual(list.data[0].key, "company_name")
+        XCTAssertEqual(list.data[0].type, .string)
+        XCTAssertEqual(list.data[0].fallbackValue, .string("Acme Corp"))
+        XCTAssertEqual(list.data[1].type, .number)
+        XCTAssertEqual(list.data[1].fallbackValue, .number(10))
+    }
+    
+    func testContactPropertyCreateEncoding() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        
+        let body = ContactPropertyCreate(
+            key: "company_name",
+            type: .string,
+            fallbackValue: .string("Acme Corp")
+        )
+        let json = String(data: try encoder.encode(body), encoding: .utf8)!
+        XCTAssertTrue(json.contains("\"fallback_value\":\"Acme Corp\""))
+        XCTAssertTrue(json.contains("\"key\":\"company_name\""))
+        XCTAssertTrue(json.contains("\"type\":\"string\""))
+    }
+    
+    func testContactPropertyLifecycle() async throws {
+        let key = "company_\(UUID().uuidString.prefix(8))"
+        
+        let created = try await resend.contactProperties.create(
+            key: key,
+            type: .string,
+            fallbackValue: .string("Acme Corp")
+        )
+        XCTAssertNotNil(created.id)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let property = try await resend.contactProperties.get(propertyId: created.id)
+        XCTAssertEqual(property.id, created.id)
+        XCTAssertEqual(property.key, key)
+        XCTAssertEqual(property.type, .string)
+        XCTAssertEqual(property.fallbackValue, .string("Acme Corp"))
+        
+        let updated = try await resend.contactProperties.update(
+            propertyId: created.id,
+            fallbackValue: .string("Example Company")
+        )
+        XCTAssertEqual(updated.id, created.id)
+        
+        let list = try await resend.contactProperties.list(limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == created.id }))
+        
+        let deleted = try await resend.contactProperties.delete(propertyId: created.id)
+        XCTAssertEqual(deleted.id, created.id)
+        XCTAssertTrue(deleted.deleted)
+    }
 
 }

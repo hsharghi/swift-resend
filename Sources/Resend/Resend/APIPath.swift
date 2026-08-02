@@ -99,6 +99,11 @@ enum APIPath {
     case suppressionRemove(idOrEmail: String)
     case suppressionBatchAdd
     case suppressionBatchRemove
+    case contactPropertyCreate
+    case contactPropertyList(limit: Int, after: String?, before: String?)
+    case contactPropertyGet(propertyId: String)
+    case contactPropertyUpdate(propertyId: String)
+    case contactPropertyDelete(propertyId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -356,6 +361,18 @@ enum APIPath {
             return path(of: "/suppressions/batch/add")
         case .suppressionBatchRemove:
             return path(of: "/suppressions/batch/remove")
+        case .contactPropertyCreate:
+            return path(of: "/contact-properties")
+        case .contactPropertyList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/contact-properties?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .contactPropertyGet(let propertyId):
+            return path(of: "/contact-properties/\(propertyId)")
+        case .contactPropertyUpdate(let propertyId):
+            return path(of: "/contact-properties/\(propertyId)")
+        case .contactPropertyDelete(let propertyId):
+            return path(of: "/contact-properties/\(propertyId)")
         }
     }
 }
