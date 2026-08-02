@@ -98,6 +98,10 @@ public class ResendClient {
         TemplateClient(httpClient: httpClient, apiKey: apiKey)
     }()
     
+    public lazy var webhooks: WebhookClient = {
+        WebhookClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         

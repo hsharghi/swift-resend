@@ -272,6 +272,25 @@ let emailId = try await resendClient.emails.send(email: .init(
 ))
 ~~~~
 
+### Managing Webhooks
+
+Create and manage webhook endpoints for email and other Resend events. Refer to the [Resend Webhooks API](https://resend.com/docs/api-reference/webhooks/create-webhook).
+~~~~swift
+let webhook = try await resendClient.webhooks.create(
+    endpoint: "https://example.com/handler",
+    events: [.emailSent, .emailDelivered]
+)
+
+print(webhook.signingSecret)
+
+_ = try await resendClient.webhooks.update(
+    webhookId: webhook.id,
+    status: .enabled
+)
+
+let list = try await resendClient.webhooks.list()
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -306,7 +325,7 @@ catch let error as ResendError {
 - [x] Domains
 - [x] API Keys
 - [x] Broadcasts
-- [ ] Webhooks
+- [x] Webhooks
 - [x] Templates
 
 

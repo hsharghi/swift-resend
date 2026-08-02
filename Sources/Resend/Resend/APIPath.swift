@@ -88,6 +88,11 @@ enum APIPath {
     case templateDelete(idOrAlias: String)
     case templatePublish(idOrAlias: String)
     case templateDuplicate(idOrAlias: String)
+    case webhookCreate
+    case webhookList(limit: Int, after: String?, before: String?)
+    case webhookGet(webhookId: String)
+    case webhookUpdate(webhookId: String)
+    case webhookDelete(webhookId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -316,6 +321,18 @@ enum APIPath {
             return path(of: "/templates/\(encodePathComponent(idOrAlias))/publish")
         case .templateDuplicate(let idOrAlias):
             return path(of: "/templates/\(encodePathComponent(idOrAlias))/duplicate")
+        case .webhookCreate:
+            return path(of: "/webhooks")
+        case .webhookList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/webhooks?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .webhookGet(let webhookId):
+            return path(of: "/webhooks/\(webhookId)")
+        case .webhookUpdate(let webhookId):
+            return path(of: "/webhooks/\(webhookId)")
+        case .webhookDelete(let webhookId):
+            return path(of: "/webhooks/\(webhookId)")
         }
     }
 }

@@ -1324,5 +1324,110 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(deleted.id, created.id)
         XCTAssertTrue(deleted.deleted)
     }
+    
+    // MARK: - Webhook Tests
+    
+    func testWebhookListDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "id": "7ab123cd-ef45-6789-abcd-ef0123456789",
+                    "created_at": "2024-09-10 10:15:30.000000+00",
+                    "status": "disabled",
+                    "endpoint": "https://first-webhook.example.com/handler",
+                    "events": ["email.sent"]
+                },
+                {
+                    "id": "4dd369bc-aa82-4ff3-97de-514ae3000ee0",
+                    "created_at": "2024-08-22 15:28:00.000000+00",
+                    "status": "enabled",
+                    "endpoint": "https://second-webhook.example.com/receive",
+                    "events": ["email.received", "email.delivered"]
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(WebhookListResponse.self, from: listJSON)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 2)
+        XCTAssertEqual(list.data[0].status, .disabled)
+        XCTAssertEqual(list.data[0].events, [.emailSent])
+        XCTAssertEqual(list.data[1].status, .enabled)
+        XCTAssertEqual(list.data[1].events, [.emailReceived, .emailDelivered])
+        
+        let detailJSON = """
+        {
+            "object": "webhook",
+            "id": "4dd369bc-aa82-4ff3-97de-514ae3000ee0",
+            "created_at": "2024-08-22 15:28:00.000000+00",
+            "status": "enabled",
+            "endpoint": "https://example.com/handler",
+            "events": ["email.sent", "contact.created"],
+            "signing_secret": "whsec_xxxxxxxxxx"
+        }
+        """.data(using: .utf8)!
+        
+        let webhook = try decoder.decode(Webhook.self, from: detailJSON)
+        XCTAssertEqual(webhook.id, "4dd369bc-aa82-4ff3-97de-514ae3000ee0")
+        XCTAssertEqual(webhook.endpoint, "https://example.com/handler")
+        XCTAssertEqual(webhook.events, [.emailSent, .contactCreated])
+        XCTAssertEqual(webhook.signingSecret, "whsec_xxxxxxxxxx")
+    }
+    
+    func testWebhookCreateEncoding() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        
+        let body = WebhookCreate(
+            endpoint: "https://example.com/handler",
+            events: [.emailSent, .emailDelivered]
+        )
+        let json = String(data: try encoder.encode(body), encoding: .utf8)!
+        XCTAssertTrue(json.contains("example.com"))
+        XCTAssertTrue(json.contains("\"email.sent\""))
+        XCTAssertTrue(json.contains("\"email.delivered\""))
+    }
+    
+    func testWebhookLifecycle() async throws {
+        let endpoint = "https://example.com/webhook-\(UUID().uuidString.prefix(8))"
+        
+        let created = try await resend.webhooks.create(
+            endpoint: endpoint,
+            events: [.emailSent]
+        )
+        XCTAssertNotNil(created.id)
+        XCTAssertFalse(created.signingSecret.isEmpty)
+        
+        try await Task.sleep(for: .seconds(1))
+        
+        let webhook = try await resend.webhooks.get(webhookId: created.id)
+        XCTAssertEqual(webhook.id, created.id)
+        XCTAssertEqual(webhook.endpoint, endpoint)
+        XCTAssertEqual(webhook.events, [.emailSent])
+        
+        let updated = try await resend.webhooks.update(
+            webhookId: created.id,
+            endpoint: "\(endpoint)/updated",
+            events: [.emailSent, .emailDelivered],
+            status: .disabled
+        )
+        XCTAssertEqual(updated.id, created.id)
+        
+        let list = try await resend.webhooks.list(limit: 20)
+        XCTAssertTrue(list.data.contains(where: { $0.id == created.id }))
+        
+        let deleted = try await resend.webhooks.delete(webhookId: created.id)
+        XCTAssertEqual(deleted.id, created.id)
+        XCTAssertTrue(deleted.deleted)
+    }
 
 }
