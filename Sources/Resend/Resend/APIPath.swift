@@ -42,6 +42,9 @@ enum APIPath {
     case domainUpdate(domainId: String)
     case domainList
     case domainDelete(domainId: String)
+    case domainClaimCreate
+    case domainClaimGet(domainId: String)
+    case domainClaimVerify(domainId: String)
     case broadcastCreate
     case broadcastGet(broadcastId: String)
     case broadcastUpdate(broadcastId: String)
@@ -213,6 +216,12 @@ enum APIPath {
             return path(of: "/domains")
         case .domainDelete(let domainId):
             return path(of: "/domains/\(domainId)")
+        case .domainClaimCreate:
+            return path(of: "/domains/claim")
+        case .domainClaimGet(let domainId):
+            return path(of: "/domains/\(domainId)/claim")
+        case .domainClaimVerify(let domainId):
+            return path(of: "/domains/\(domainId)/claim/verify")
         case .broadcastCreate:
             return path(of: "/broadcasts")
         case .broadcastGet(let broadcastId):

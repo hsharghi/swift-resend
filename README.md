@@ -334,6 +334,19 @@ _ = try await resendClient.contactProperties.update(
 let list = try await resendClient.contactProperties.list()
 ~~~~
 
+### Claiming Domains
+
+Claim a domain already verified by another team. Refer to the [Resend Domain Claims API](https://resend.com/docs/api-reference/domains/claim-domain).
+~~~~swift
+let claim = try await resendClient.domains.claims.create(name: "example.com")
+
+print(claim.record?.value)
+
+let status = try await resendClient.domains.claims.get(domainId: claim.domainId)
+
+_ = try await resendClient.domains.claims.verify(domainId: claim.domainId)
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.

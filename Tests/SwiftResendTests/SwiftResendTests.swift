@@ -702,6 +702,63 @@ final class SwiftResendTests: XCTestCase {
     func testDeleteDomain() async throws {
         _ = try await resend.domains.delete(domainId: "d91cd9bd-1176-453e-8fc1-35364d380206")
     }
+    
+    func testDomainClaimDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let json = """
+        {
+            "object": "domain_claim",
+            "id": "dacf4072-4119-4d88-932f-6c6126d3a9d1",
+            "name": "example.com",
+            "status": "pending",
+            "domain_id": "d91cd9bd-1176-453e-8fc1-35364d380206",
+            "region": "us-east-1",
+            "record": {
+                "type": "TXT",
+                "name": "example.com",
+                "value": "resend-domain-verification=3f8a1c2d4e5b6a7f8091a2b3c4d5e6f7",
+                "ttl": "Auto"
+            },
+            "blocked_reason": null,
+            "failure_reason": null,
+            "created_at": "2024-06-16 17:12:02.059593+00",
+            "expires_at": "2024-06-23 17:12:02.059593+00"
+        }
+        """.data(using: .utf8)!
+        
+        let claim = try decoder.decode(DomainClaim.self, from: json)
+        XCTAssertEqual(claim.id, "dacf4072-4119-4d88-932f-6c6126d3a9d1")
+        XCTAssertEqual(claim.name, "example.com")
+        XCTAssertEqual(claim.status, "pending")
+        XCTAssertEqual(claim.domainId, "d91cd9bd-1176-453e-8fc1-35364d380206")
+        XCTAssertEqual(claim.record?.type, "TXT")
+        XCTAssertNil(claim.blockedReason)
+        XCTAssertNotNil(claim.expiresAt)
+    }
+    
+    func testDomainClaimCreateEncoding() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        
+        let body = DomainClaimCreate(
+            name: "example.com",
+            region: "us-east-1",
+            customReturnPath: "send",
+            openTracking: true,
+            clickTracking: false,
+            trackingSubdomain: "links"
+        )
+        let json = String(data: try encoder.encode(body), encoding: .utf8)!
+        XCTAssertTrue(json.contains("\"name\":\"example.com\""))
+        XCTAssertTrue(json.contains("\"custom_return_path\":\"send\""))
+        XCTAssertTrue(json.contains("\"open_tracking\":true"))
+        XCTAssertTrue(json.contains("\"click_tracking\":false"))
+        XCTAssertTrue(json.contains("\"tracking_subdomain\":\"links\""))
+    }
 
     // MARK: Broadcast Tests
     func testCreateBroadcast() async throws {

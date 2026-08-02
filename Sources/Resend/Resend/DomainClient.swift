@@ -96,4 +96,8 @@ public class DomainClient: ResendClient {
         
         return try parseResponse(response, to: DomainDeleteResponse.self)
     }
+    
+    public lazy var claims: Claims = {
+        Claims(client: self)
+    }()
 } 
