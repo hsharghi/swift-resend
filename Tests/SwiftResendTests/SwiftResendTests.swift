@@ -1668,5 +1668,98 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(deleted.id, created.id)
         XCTAssertTrue(deleted.deleted)
     }
+    
+    // MARK: - Log Tests
+    
+    func testLogListAndDetailDecoding() throws {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        let listJSON = """
+        {
+            "object": "list",
+            "has_more": true,
+            "data": [
+                {
+                    "id": "37e4414c-5e25-4dbc-a071-43552a4bd53b",
+                    "created_at": "2024-03-30 13:43:54.622865+00",
+                    "endpoint": "/emails",
+                    "method": "POST",
+                    "response_status": 200,
+                    "user_agent": "resend-node:6.0.3"
+                },
+                {
+                    "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                    "created_at": "2024-03-30 12:15:00.123456+00",
+                    "endpoint": "/emails/4ef9a417-02e9-4d39-ad75-9611e0fcc33c",
+                    "method": "GET",
+                    "response_status": 200,
+                    "user_agent": null
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try decoder.decode(LogListResponse.self, from: listJSON)
+        XCTAssertTrue(list.hasMore)
+        XCTAssertEqual(list.data.count, 2)
+        XCTAssertEqual(list.data[0].method, .post)
+        XCTAssertEqual(list.data[0].responseStatus, 200)
+        XCTAssertNil(list.data[1].userAgent)
+        
+        let detailJSON = """
+        {
+            "object": "log",
+            "id": "37e4414c-5e25-4dbc-a071-43552a4bd53b",
+            "created_at": "2024-03-30 13:43:54.622865+00",
+            "endpoint": "/emails",
+            "method": "POST",
+            "response_status": 200,
+            "user_agent": "resend-node:6.0.3",
+            "request_body": {
+                "from": "Acme <onboarding@resend.dev>",
+                "to": ["delivered@resend.dev"],
+                "subject": "Hello World"
+            },
+            "response_body": {
+                "id": "4ef9a417-02e9-4d39-ad75-9611e0fcc33c"
+            }
+        }
+        """.data(using: .utf8)!
+        
+        let log = try decoder.decode(Log.self, from: detailJSON)
+        XCTAssertEqual(log.id, "37e4414c-5e25-4dbc-a071-43552a4bd53b")
+        XCTAssertEqual(log.method, .post)
+        if case .string(let from) = log.requestBody?["from"] {
+            XCTAssertEqual(from, "Acme <onboarding@resend.dev>")
+        } else {
+            XCTFail("Expected request_body.from string")
+        }
+        if case .array(let to) = log.requestBody?["to"],
+           case .string(let first) = to.first {
+            XCTAssertEqual(first, "delivered@resend.dev")
+        } else {
+            XCTFail("Expected request_body.to array")
+        }
+        if case .string(let id) = log.responseBody?["id"] {
+            XCTAssertEqual(id, "4ef9a417-02e9-4d39-ad75-9611e0fcc33c")
+        } else {
+            XCTFail("Expected response_body.id string")
+        }
+    }
+    
+    func testListLogs() async throws {
+        let list = try await resend.logs.list(limit: 5)
+        XCTAssertGreaterThanOrEqual(list.data.count, 0)
+        
+        if let first = list.data.first {
+            let log = try await resend.logs.get(logId: first.id)
+            XCTAssertEqual(log.id, first.id)
+            XCTAssertEqual(log.endpoint, first.endpoint)
+            XCTAssertEqual(log.method, first.method)
+        }
+    }
 
 }

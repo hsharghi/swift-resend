@@ -107,6 +107,8 @@ enum APIPath {
     case contactPropertyGet(propertyId: String)
     case contactPropertyUpdate(propertyId: String)
     case contactPropertyDelete(propertyId: String)
+    case logList(limit: Int, after: String?, before: String?)
+    case logGet(logId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -382,6 +384,12 @@ enum APIPath {
             return path(of: "/contact-properties/\(propertyId)")
         case .contactPropertyDelete(let propertyId):
             return path(of: "/contact-properties/\(propertyId)")
+        case .logList(limit: let limit, after: let after, before: let before):
+            var path = path(of: "/logs?limit=\(limit)")
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .logGet(let logId):
+            return path(of: "/logs/\(logId)")
         }
     }
 }

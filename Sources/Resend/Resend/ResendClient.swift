@@ -110,6 +110,10 @@ public class ResendClient {
         ContactPropertyClient(httpClient: httpClient, apiKey: apiKey)
     }()
     
+    public lazy var logs: LogClient = {
+        LogClient(httpClient: httpClient, apiKey: apiKey)
+    }()
+    
     func parseResponse<T: Decodable>(_ response: HTTPClient.Response, to: T.Type) throws -> T {
         let byteBuffer: ByteBuffer = response.body ?? .init()
         

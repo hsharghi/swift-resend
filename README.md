@@ -347,6 +347,18 @@ let status = try await resendClient.domains.claims.get(domainId: claim.domainId)
 _ = try await resendClient.domains.claims.verify(domainId: claim.domainId)
 ~~~~
 
+### Managing Logs
+
+Inspect API request logs. Refer to the [Resend Logs API](https://resend.com/docs/api-reference/logs/list-logs).
+~~~~swift
+let logs = try await resendClient.logs.list(limit: 20)
+
+if let first = logs.data.first {
+    let log = try await resendClient.logs.get(logId: first.id)
+    print(log.endpoint, log.responseStatus)
+}
+~~~~
+
 ### Legacy Audiences
 
 `AudienceClient` and audience-scoped contact methods remain available but are deprecated. Prefer Segments and the global Contacts API.
@@ -385,6 +397,7 @@ catch let error as ResendError {
 - [x] Templates
 - [x] Suppressions
 - [x] Contact Properties
+- [x] Logs
 
 
 ## License
