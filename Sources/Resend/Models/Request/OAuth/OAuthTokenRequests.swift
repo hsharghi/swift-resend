@@ -1,7 +1,7 @@
 import Foundation
 
 /// How the OAuth client authenticates at the token endpoint.
-public enum OAuthTokenEndpointAuthMethod: Sendable {
+public enum OAuthTokenEndpointAuthMethod {
     /// Public client (`token_endpoint_auth_method: none`). PKCE only; no client secret.
     case none
     /// Confidential client: send `client_secret` in the request body.
@@ -11,7 +11,7 @@ public enum OAuthTokenEndpointAuthMethod: Sendable {
 }
 
 /// Exchange an authorization code (with PKCE) for tokens.
-public struct OAuthAuthorizationCodeTokenRequest: Sendable {
+public struct OAuthAuthorizationCodeTokenRequest {
     public var clientId: String
     public var code: String
     public var redirectUri: String
@@ -37,7 +37,7 @@ public struct OAuthAuthorizationCodeTokenRequest: Sendable {
 }
 
 /// Refresh an access token (rotating refresh tokens).
-public struct OAuthRefreshTokenRequest: Sendable {
+public struct OAuthRefreshTokenRequest {
     public var clientId: String
     public var refreshToken: String
     public var clientSecret: String?
@@ -59,7 +59,7 @@ public struct OAuthRefreshTokenRequest: Sendable {
     }
 }
 
-public struct OAuthTokenResponse: Decodable, Equatable, Sendable {
+public struct OAuthTokenResponse: Decodable, Equatable {
     public var accessToken: String
     public var tokenType: String
     public var expiresIn: Int

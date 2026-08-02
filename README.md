@@ -195,6 +195,35 @@ let contact = try await resendClient.contacts.get(idOrEmail: contactId)
 _ = try await resendClient.contacts.addToSegment(contactId: contactId, segmentId: segment.id)
 ~~~~
 
+### Importing Contacts
+
+Bulk-import contacts from a CSV file. Imports run asynchronously — create returns an ID you can poll. Refer to the [Resend Contact Imports API](https://resend.com/docs/api-reference/contacts/create-contact-import).
+~~~~swift
+let csv = Data("""
+Email,First Name,Last Name
+jane@example.com,Jane,Doe
+""".utf8)
+
+let created = try await resendClient.contacts.imports.create(
+    ContactImportCreate(
+        fileData: csv,
+        filename: "contacts.csv",
+        columnMap: .init(
+            email: "Email",
+            firstName: "First Name",
+            lastName: "Last Name"
+        ),
+        onConflict: .upsert,
+        segmentIds: [segment.id]
+    )
+)
+
+let job = try await resendClient.contacts.imports.get(importId: created.id)
+print(job.status, job.counts)
+
+let imports = try await resendClient.contacts.imports.list(status: .completed, limit: 10)
+~~~~
+
 ### Managing Topics
 
 Topics control subscription preferences. Refer to the [Resend Topics API](https://resend.com/docs/api-reference/topics/create-topic).
@@ -419,6 +448,7 @@ catch let error as ResendError {
   - [x] Receiving
 - [x] Segments
 - [x] Contacts
+- [x] Contact Imports
 - [x] Topics
 - [x] Events
 - [x] Automations

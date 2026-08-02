@@ -112,6 +112,9 @@ enum APIPath {
     case oauthGrantList(limit: Int, after: String?, before: String?)
     case oauthGrantRevoke(grantId: String)
     case oauthToken
+    case contactImportCreate
+    case contactImportList(status: String?, limit: Int, after: String?, before: String?)
+    case contactImportGet(importId: String)
     
     private static func path(of path: String) -> String {
         APIPath.apiURL + path
@@ -401,6 +404,17 @@ enum APIPath {
             return path(of: "/oauth/grants/\(grantId)")
         case .oauthToken:
             return path(of: "/oauth/token")
+        case .contactImportCreate:
+            return path(of: "/contacts/imports")
+        case .contactImportList(status: let status, limit: let limit, after: let after, before: let before):
+            var path = path(of: "/contacts/imports?limit=\(limit)")
+            if let status {
+                path += "&status=\(status)"
+            }
+            appendPagination(&path, after: after, before: before)
+            return path
+        case .contactImportGet(let importId):
+            return path(of: "/contacts/imports/\(importId)")
         }
     }
 }

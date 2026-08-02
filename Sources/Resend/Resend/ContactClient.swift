@@ -329,4 +329,8 @@ public class ContactClient: ResendClient {
         return try parseContactListResponse(response)
     }
     
+    public lazy var imports: Imports = {
+        Imports(client: self)
+    }()
+    
 }

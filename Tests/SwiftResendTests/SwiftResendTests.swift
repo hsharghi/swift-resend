@@ -1880,5 +1880,92 @@ final class SwiftResendTests: XCTestCase {
         XCTAssertEqual(token.refreshToken, "JcL7aYfE7S9h3L4qv0o2e1w8m6n5b3x9RkP2tD4uV6Q")
         XCTAssertTrue(token.accessToken.hasPrefix("eyJ"))
     }
+    
+    // MARK: - Contact Import Tests
+    
+    func testContactImportColumnMapEncoding() throws {
+        let map = ContactImportColumnMap(
+            email: "Email",
+            firstName: "First Name",
+            lastName: "Last Name",
+            unsubscribed: "Unsubscribed",
+            properties: [
+                "plan": .init(column: "Plan", type: .string)
+            ]
+        )
+        let data = try JSONEncoder().encode(map)
+        let json = String(data: data, encoding: .utf8)!
+        XCTAssertTrue(json.contains("\"email\":\"Email\""))
+        XCTAssertTrue(json.contains("\"first_name\":\"First Name\""))
+        XCTAssertTrue(json.contains("\"last_name\":\"Last Name\""))
+        XCTAssertTrue(json.contains("\"unsubscribed\":\"Unsubscribed\""))
+        XCTAssertTrue(json.contains("\"column\":\"Plan\""))
+        XCTAssertTrue(json.contains("\"type\":\"string\""))
+    }
+    
+    func testContactImportDecoding() throws {
+        let json = """
+        {
+            "object": "list",
+            "has_more": false,
+            "data": [
+                {
+                    "object": "contact_import",
+                    "id": "479e3145-dd38-476b-932c-529ceb705947",
+                    "status": "completed",
+                    "created_at": "2026-05-15 18:32:37.823000+00",
+                    "completed_at": "2026-05-15 18:33:42.916000+00",
+                    "counts": {
+                        "total": 1200,
+                        "created": 800,
+                        "updated": 300,
+                        "skipped": 75,
+                        "failed": 25
+                    }
+                }
+            ]
+        }
+        """.data(using: .utf8)!
+        
+        let list = try JSONDecoder().decode(ContactImportListResponse.self, from: json)
+        XCTAssertFalse(list.hasMore)
+        XCTAssertEqual(list.data.count, 1)
+        XCTAssertEqual(list.data[0].id, "479e3145-dd38-476b-932c-529ceb705947")
+        XCTAssertEqual(list.data[0].status, .completed)
+        XCTAssertEqual(list.data[0].counts.created, 800)
+        XCTAssertNotNil(list.data[0].completedAt)
+        
+        let isoJSON = """
+        {
+            "object": "contact_import",
+            "id": "479e3145-dd38-476b-932c-529ceb705947",
+            "status": "in_progress",
+            "created_at": "2026-05-15T18:32:37.823Z",
+            "completed_at": null,
+            "counts": {
+                "total": 0,
+                "created": 0,
+                "updated": 0,
+                "skipped": 0,
+                "failed": 0
+            }
+        }
+        """.data(using: .utf8)!
+        
+        let job = try JSONDecoder().decode(ContactImport.self, from: isoJSON)
+        XCTAssertEqual(job.status, .inProgress)
+        XCTAssertNil(job.completedAt)
+    }
+    
+    func testListContactImports() async throws {
+        let list = try await resend.contacts.imports.list(limit: 5)
+        XCTAssertGreaterThanOrEqual(list.data.count, 0)
+        
+        if let first = list.data.first {
+            let job = try await resend.contacts.imports.get(importId: first.id)
+            XCTAssertEqual(job.id, first.id)
+            XCTAssertEqual(job.status, first.status)
+        }
+    }
 
 }
